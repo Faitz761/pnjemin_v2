@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block title %}{{ barang.nama_barang }} - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.detail-wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1.8rem; align-items: start; }
+.detail-foto {
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: 4rem;
+    border: 1px solid var(--border);
+}
+.detail-foto img { width: 100%; height: 100%; object-fit: cover; }
+.detail-info h1 { font-family: 'Syne', sans-serif; font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.5rem; }
+.harga-big { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 0.8rem; }
+.harga-big span { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.meta-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.83rem; color: var(--text-muted); background: var(--bg); padding: 0.3rem 0.7rem; border-radius: 20px; }
+.meta-item i { color: var(--primary); }
+.detail-desc { font-size: 0.9rem; color: var(--text); line-height: 1.7; margin-bottom: 1.2rem; }
+.pemilik-card { background: var(--bg); border-radius: var(--radius-sm); padding: 0.9rem; display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; }
+.pemilik-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
+.pemilik-name { font-weight: 700; font-size: 0.88rem; }
+.pemilik-rating { font-size: 0.78rem; color: var(--text-muted); }
+.stok-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; }
+.stok-ada { background: #dcfce7; color: #15803d; }
+.stok-habis { background: #fee2e2; color: #dc2626; }
+.review-item { padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+.review-item:last-child { border-bottom: none; }
+.review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+.reviewer-name { font-weight: 700; font-size: 0.88rem; }
+.review-stars { color: var(--accent); font-size: 0.85rem; }
+.review-text { font-size: 0.85rem; color: var(--text-muted); }
+@media (max-width: 700px) {
+    .detail-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="detail-wrap">
+    <a href="{{ url_for('home') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="detail-grid">
+        <!-- FOTO -->
+        <div>
+            <div class="detail-foto">
+                {% if barang.foto %}
+                <img src="{{ url_for('static', filename='images/uploads/' + barang.foto) }}" alt="{{ barang.nama_barang }}">
+                {% else %}
+                <i class="fas fa-box-open"></i>
+                {% endif %}
+            </div>
+            {% if barang.kategori %}
+            <div style="margin-top:0.8rem">
+                <span class="badge badge-primary"><i class="fas fa-tag"></i> {{ barang.kategori }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <!-- INFO -->
+        <div class="detail-info">
+            <h1>{{ barang.nama_barang }}</h1>
+            <div class="meta-row">
+                <div class="meta-item"><i class="fas fa-map-marker-alt"></i> {{ barang.lokasi or 'Lokasi tidak diketahui' }}</div>
+                <div class="meta-item"><i class="fas fa-star" style="color:var(--accent)"></i>
+                    {{ "%.1f"|format(barang.rating) if barang.rating else "Belum ada rating" }}
+                    {% if reviews %}({{ reviews|length }} ulasan){% endif %}
+                </div>
+                <div class="meta-item"><i class="fas fa-fire"></i> {{ barang.total_disewa or 0 }}x disewa</div>
+            </div>
+            <div class="harga-big">Rp {{ "{:,.0f}".format(barang.harga_sewa) }}<span>/hari</span></div>
+            <div style="margin-bottom:1rem">
+                {% if barang.stok > 0 %}
+                <span class="stok-badge stok-ada"><i class="fas fa-check-circle"></i> Tersedia (stok: {{ barang.stok }})</span>
+                {% else %}
+                <span class="stok-badge stok-habis"><i class="fas fa-times-circle"></i> Stok habis</span>
+                {% endif %}
+            </div>
+            <p class="detail-desc">{{ barang.deskripsi or 'Tidak ada deskripsi.' }}</p>
+            <!-- PEMILIK -->
+            <div class="pemilik-card">
+                <div class="pemilik-avatar">{{ barang.nama_pemilik[0].upper() }}</div>
+                <div>
+                    <div class="pemilik-name">{{ barang.nama_pemilik }}</div>
+                    <div class="pemilik-rating"><span style="color:var(--accent)">★</span>
+                        {{ "%.1f"|format(barang.rating_pemilik) if barang.rating_pemilik else "Baru" }} · Pemilik Barang
+                    </div>
+                </div>
+            </div>
+            {% if barang.stok > 0 and not is_pemilik_sendiri %}
+            <a href="{{ url_for('booking', id_barang=barang.id) }}" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:0.6rem">
+                <i class="fas fa-handshake"></i> Pinjam Barang Ini
+            </a>
+            {% elif is_pemilik_sendiri %}
+            <div style="background:var(--bg);border-radius:var(--radius-sm);padding:0.9rem;text-align:center;font-size:0.85rem;color:var(--text-muted);margin-bottom:0.6rem">
+                <i class="fas fa-info-circle"></i>
+                {% if session.get('role') == 'admin' %}Admin tidak dapat meminjam barang.
+                {% else %}Ini barang milikmu. Kamu tidak bisa meminjamnya sendiri.{% endif %}
+            </div>
+            {% else %}
+            <button class="btn btn-lg" style="width:100%;justify-content:center;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;margin-bottom:0.6rem">
+                <i class="fas fa-times"></i> Stok Habis
+            </button>
+            {% endif %}
+            {% if session.get('user_id') and not is_pemilik_sendiri %}
+            <a href="{{ url_for('chat_detail', partner_id=barang.pemilik_id, id_barang=barang.id) }}" class="btn btn-outline btn-lg" style="width:100%;justify-content:center">
+                <i class="fas fa-comment-dots"></i> Chat Pemilik
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- POPULARITY + REVIEW SUMMARY -->
+    <div style="margin-top:2.5rem">
+        <!-- Statistik Popularitas -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+            <div class="card" style="text-align:center;padding:1.2rem">
+                <div style="font-size:2rem;font-weight:800;color:var(--primary)">{{ total_disewa }}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:0.2rem"><i class="fas fa-fire" style="color:#f97316"></i> Kali Dipinjam</div>
+            </div>
+            <div class="card" style="text-align:center;padding:1.2rem">
+                <div style="font-size:2rem;font-weight:800;color:var(--accent)">{{ "%.1f"|format(barang.rating) if barang.rating else "—" }}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:0.2rem"><i class="fas fa-star" style="color:var(--accent)"></i> Rating Rata-rata</div>
+            </div>
+            <div class="card" style="text-align:center;padding:1.2rem">
+                <div style="font-size:2rem;font-weight:800;color:var(--secondary)">{{ reviews|length }}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-top:0.2rem"><i class="fas fa-comment" style="color:var(--secondary)"></i> Ulasan</div>
+            </div>
+        </div>
+
+        <!-- Rating breakdown + Ulasan -->
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:1.5rem;align-items:start">
+            {% if reviews %}
+            <!-- Rating Summary -->
+            <div class="card" style="padding:1.2rem;min-width:200px">
+                <div style="text-align:center;margin-bottom:0.8rem">
+                    <div style="font-size:3rem;font-weight:800;color:var(--accent);line-height:1">{{ "%.1f"|format(barang.rating) if barang.rating else "0.0" }}</div>
+                    <div style="color:var(--accent);font-size:1.1rem;margin:0.2rem 0">
+                        {% set r_int = barang.rating|int if barang.rating else 0 %}
+                        {% for i in range(r_int) %}★{% endfor %}{% for i in range(5-r_int) %}☆{% endfor %}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">dari {{ reviews|length }} ulasan</div>
+                </div>
+                {% for star in [5,4,3,2,1] %}
+                {% set count = reviews|selectattr('rating','equalto',star)|list|length %}
+                {% set pct = (count / reviews|length * 100)|int if reviews else 0 %}
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem">
+                    <span style="font-size:0.72rem;font-weight:700;color:var(--text-muted);width:8px">{{ star }}</span>
+                    <i class="fas fa-star" style="color:var(--accent);font-size:0.65rem"></i>
+                    <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                        <div style="width:{{ pct }}%;height:100%;background:var(--accent);border-radius:3px"></div>
+                    </div>
+                    <span style="font-size:0.7rem;color:var(--text-muted);width:20px;text-align:right">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Daftar Review -->
+            <div class="card">
+                <div class="card-header" style="font-family:'Syne',sans-serif;font-weight:800">
+                    <i class="fas fa-star" style="color:var(--accent)"></i> Ulasan Pengguna
+                </div>
+                <div class="card-body" style="padding:0.5rem 1.2rem">
+                    {% if reviews %}
+                    {% for r in reviews %}
+                    <div class="review-item">
+                        <div class="review-header">
+                            <div style="display:flex;align-items:center;gap:0.6rem">
+                                <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0">
+                                    {{ r.nama_reviewer[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="reviewer-name">{{ r.nama_reviewer }}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-muted)">{{ r.created_at[:10] }}</div>
+                                </div>
+                            </div>
+                            <div class="review-stars">
+                                {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5-r.rating) %}☆{% endfor %}
+                            </div>
+                        </div>
+                        <div class="review-text" style="margin-top:0.4rem;padding-left:2.5rem">{{ r.komentar or 'Tidak ada komentar.' }}</div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div style="text-align:center;padding:2rem;color:var(--text-muted)">
+                        <i class="fas fa-comment-slash" style="font-size:1.5rem;opacity:0.25;display:block;margin-bottom:0.5rem"></i>
+                        Belum ada ulasan untuk barang ini.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

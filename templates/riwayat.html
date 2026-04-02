@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Riwayat Peminjaman - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.riwayat-wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+.trx-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.trx-header { padding: 0.9rem 1.2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--bg); }
+.trx-id { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+.trx-body { padding: 1rem 1.2rem; display: flex; gap: 1rem; align-items: center; }
+.trx-img { width: 70px; height: 70px; border-radius: var(--radius-sm); object-fit: cover; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #bbb; flex-shrink: 0; overflow: hidden; }
+.trx-img img { width: 70px; height: 70px; object-fit: cover; }
+.trx-info { flex: 1; }
+.trx-nama { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
+.trx-meta { font-size: 0.82rem; color: var(--text-muted); }
+.trx-total { font-weight: 800; color: var(--primary); font-size: 1rem; white-space: nowrap; }
+.trx-actions { padding: 0.75rem 1.2rem; border-top: 1px solid var(--border); display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+.empty-state i { font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 0.8rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="riwayat-wrap">
+    <div class="page-header">
+        <h1><i class="fas fa-history" style="color:var(--primary)"></i> Riwayat Peminjaman</h1>
+        <p>Semua transaksi peminjaman kamu</p>
+    </div>
+
+    {% if transaksi %}
+    {% for t in transaksi %}
+    <div class="trx-card">
+        <div class="trx-header">
+            <div class="trx-id">#TRX{{ '%04d'|format(t.id) }} &middot; {{ t.created_at[:10] }}</div>
+            {% set s = t.status %}
+            {% if s == 'menunggu_persetujuan' %}<span class="badge badge-warning"><i class="fas fa-clock"></i> Menunggu Persetujuan</span>
+            {% elif s == 'menunggu_pembayaran' %}<span class="badge badge-warning"><i class="fas fa-wallet"></i> Menunggu Pembayaran</span>
+            {% elif s == 'menunggu_verifikasi' %}<span class="badge badge-warning"><i class="fas fa-search"></i> Verifikasi Pembayaran</span>
+            {% elif s == 'sedang_dipinjam' %}<span class="badge badge-primary"><i class="fas fa-handshake"></i> Sedang Dipinjam</span>
+            {% elif s == 'menunggu_pengembalian' %}<span class="badge badge-warning"><i class="fas fa-undo"></i> Menunggu Pengembalian</span>
+            {% elif s == 'selesai' %}<span class="badge badge-secondary"><i class="fas fa-flag-checkered"></i> Selesai</span>
+            {% elif s == 'dibatalkan' %}<span class="badge badge-danger"><i class="fas fa-times"></i> Dibatalkan</span>
+            {% endif %}
+        </div>
+        <div class="trx-body">
+            <div class="trx-img">
+                {% if t.foto %}<img src="{{ url_for('static', filename='images/uploads/' + t.foto) }}" alt="">
+                {% else %}<i class="fas fa-box"></i>{% endif %}
+            </div>
+            <div class="trx-info">
+                <div class="trx-nama">{{ t.nama_barang }}</div>
+                <div class="trx-meta">
+                    <i class="fas fa-calendar"></i> {{ t.tanggal_pinjam }} &middot;
+                    <i class="fas fa-clock"></i> {{ t.durasi }} hari &middot;
+                    <i class="fas fa-user"></i> {{ t.nama_pemilik }} &middot;
+                    <i class="fas fa-credit-card"></i> {{ t.metode_pembayaran }}
+                </div>
+            </div>
+            <div class="trx-total">Rp {{ "{:,.0f}".format(t.total_biaya) }}</div>
+        </div>
+        <div class="trx-actions">
+            {% if t.status == 'menunggu_pembayaran' %}
+            <a href="{{ url_for('pembayaran', id_transaksi=t.id) }}" class="btn btn-primary btn-sm"><i class="fas fa-wallet"></i> Bayar Sekarang</a>
+            {% endif %}
+            {% if t.status == 'sedang_dipinjam' %}
+            <form method="post" action="{{ url_for('ajukan_pengembalian', id_transaksi=t.id) }}" style="display:inline" onsubmit="return confirm('Ajukan pengembalian barang ini?')">
+                <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-undo"></i> Kembalikan Barang</button>
+            </form>
+            {% endif %}
+            {% if t.status == 'menunggu_pengembalian' %}
+            <span class="badge badge-warning" style="font-size:0.78rem"><i class="fas fa-clock"></i> Menunggu konfirmasi pemilik</span>
+            {% endif %}
+            {% if t.status == 'selesai' and t.id not in reviews_done %}
+            <a href="{{ url_for('review', id_transaksi=t.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-star"></i> Beri Rating</a>
+            {% endif %}
+            {% if t.status == 'sedang_dipinjam' and t.id not in laporan_done %}
+            <a href="{{ url_for('laporan', id_transaksi=t.id) }}" class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-muted)"><i class="fas fa-flag"></i> Laporkan Masalah</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-box-open"></i>
+        <p>Belum ada transaksi. <a href="{{ url_for('home') }}" style="color:var(--primary);font-weight:600">Mulai pinjam sekarang!</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% block title %}Pusat Bantuan - P-Njemin 🤝{% endblock %}
+{% block extra_css %}
+<style>
+.bantuan-hero {
+    background: linear-gradient(135deg, #FF6B35 0%, #ff9a6c 100%);
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+.bantuan-hero h1 { font-family:'Syne',sans-serif; font-size:2rem; margin-bottom:0.5rem; }
+.bantuan-hero p { color:rgba(255,255,255,0.85); font-size:0.95rem; }
+.faq-section { margin-bottom:2.5rem; }
+.faq-section-title {
+    font-family:'Syne',sans-serif;
+    font-size:1.1rem;
+    color:var(--secondary);
+    margin-bottom:1rem;
+    padding-bottom:0.5rem;
+    border-bottom:2px solid var(--primary);
+    display:inline-block;
+}
+.faq-item {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.6rem;
+    overflow: hidden;
+}
+.faq-q {
+    padding: 1rem 1.2rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+    user-select: none;
+}
+.faq-q:hover { background: var(--bg); }
+.faq-q.open { color: var(--primary); background: var(--primary-light); }
+.faq-q i.arrow { transition: transform 0.2s; font-size:0.8rem; color:var(--text-muted); }
+.faq-q.open i.arrow { transform: rotate(180deg); color:var(--primary); }
+.faq-a {
+    padding: 0 1.2rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.2s;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+.faq-a.open { max-height: 300px; padding: 0.8rem 1.2rem 1.1rem; }
+.step-list { list-style:none; counter-reset: step; }
+.step-list li {
+    counter-increment: step;
+    display:flex;
+    align-items:flex-start;
+    gap:0.8rem;
+    margin-bottom:0.8rem;
+    font-size:0.88rem;
+    color:var(--text);
+    line-height:1.6;
+}
+.step-list li::before {
+    content: counter(step);
+    background: var(--primary);
+    color: white;
+    font-weight: 800;
+    font-size: 0.75rem;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+.quick-links {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+.quick-link-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+}
+.quick-link-card:hover { border-color:var(--primary); box-shadow:var(--shadow-hover); transform:translateY(-2px); }
+.quick-link-card i { font-size:1.6rem; color:var(--primary); margin-bottom:0.5rem; display:block; }
+.quick-link-card span { font-size:0.85rem; font-weight:600; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="bantuan-hero">
+    <h1><i class="fas fa-life-ring"></i> Pusat Bantuan</h1>
+    <p>Temukan jawaban atas pertanyaanmu seputar P-Njemin</p>
+</div>
+
+<div class="container" style="max-width:780px;padding-bottom:2rem">
+
+    <!-- Quick links -->
+    <div class="quick-links">
+        <a href="#cara-sewa" class="quick-link-card">
+            <i class="fas fa-box-open"></i>
+            <span>Cara Sewa Barang</span>
+        </a>
+        <a href="#cara-bayar" class="quick-link-card">
+            <i class="fas fa-wallet"></i>
+            <span>Cara Bayar</span>
+        </a>
+        <a href="#kerusakan" class="quick-link-card">
+            <i class="fas fa-shield-alt"></i>
+            <span>Barang Rusak?</span>
+        </a>
+    </div>
+
+    <!-- CARA SEWA -->
+    <div class="faq-section" id="cara-sewa">
+        <div class="faq-section-title"><i class="fas fa-box-open" style="color:var(--primary)"></i> Cara Menyewa Barang</div>
+
+        <div class="card" style="padding:1.5rem;margin-bottom:1rem">
+            <p style="font-weight:700;font-size:0.9rem;margin-bottom:1rem">Langkah-langkah menyewa barang di P-Njemin:</p>
+            <ol class="step-list">
+                <li>Buat akun dan pilih tipe <strong>Peminjam</strong> saat registrasi.</li>
+                <li>Browse barang di halaman Home atau cari menggunakan fitur pencarian.</li>
+                <li>Klik barang yang kamu inginkan, cek detail, foto, dan rating pemilik.</li>
+                <li>Klik <strong>Pinjam Sekarang</strong>, isi tanggal mulai, durasi, dan metode pengambilan.</li>
+                <li>Pilih metode pembayaran (Cash, QRIS, atau Transfer Bank) lalu kirim permintaan.</li>
+                <li>Tunggu persetujuan dari pemilik — kamu akan dapat notifikasi.</li>
+                <li>Setelah disetujui, lakukan pembayaran sesuai metode yang dipilih.</li>
+                <li>Barang siap diambil/diantar sesuai kesepakatan!</li>
+            </ol>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Apakah saya harus daftar dulu untuk melihat barang?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Tidak perlu. Kamu bisa browse dan lihat detail barang tanpa login. Namun untuk melakukan peminjaman, kamu perlu mendaftar dan login terlebih dahulu.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Berapa lama pemilik merespons permintaan sewa?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Tidak ada batas waktu pasti, namun umumnya pemilik aktif merespons dalam 1–24 jam. Kamu bisa chat langsung dengan pemilik untuk mempercepat konfirmasi.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Bisakah saya membatalkan peminjaman?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Pembatalan bisa dilakukan selama status masih <strong>Menunggu Persetujuan</strong> atau <strong>Menunggu Pembayaran</strong>. Hubungi pemilik via chat jika butuh diskusi lebih lanjut.</div>
+        </div>
+    </div>
+
+    <!-- CARA BAYAR -->
+    <div class="faq-section" id="cara-bayar">
+        <div class="faq-section-title"><i class="fas fa-wallet" style="color:var(--primary)"></i> Cara Pembayaran</div>
+
+        <div class="card" style="padding:1.5rem;margin-bottom:1rem">
+            <p style="font-weight:700;font-size:0.9rem;margin-bottom:1rem">P-Njemin mendukung 3 metode pembayaran:</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+                <div style="text-align:center;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                    <i class="fas fa-money-bill-wave" style="font-size:1.5rem;color:#22c55e;display:block;margin-bottom:0.4rem"></i>
+                    <strong style="font-size:0.85rem">Cash / COD</strong>
+                    <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">Bayar tunai langsung saat serah terima barang. Langsung aktif.</p>
+                </div>
+                <div style="text-align:center;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                    <i class="fas fa-qrcode" style="font-size:1.5rem;color:var(--primary);display:block;margin-bottom:0.4rem"></i>
+                    <strong style="font-size:0.85rem">QRIS</strong>
+                    <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">Scan QR pemilik via GoPay, OVO, Dana, dll. Upload bukti transfer.</p>
+                </div>
+                <div style="text-align:center;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                    <i class="fas fa-university" style="font-size:1.5rem;color:#3b82f6;display:block;margin-bottom:0.4rem"></i>
+                    <strong style="font-size:0.85rem">Transfer Bank</strong>
+                    <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">Transfer ke rekening pemilik. Upload bukti untuk verifikasi admin.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Kenapa pembayaran saya masih "Menunggu Verifikasi"?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Untuk pembayaran via QRIS atau Transfer Bank, admin perlu memverifikasi bukti yang kamu upload. Proses ini biasanya memakan waktu maksimal 1x24 jam di hari kerja. Cash/COD langsung aktif tanpa perlu verifikasi.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Ke mana saya mentransfer uangnya?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Informasi rekening atau QR code pemilik akan dikomunikasikan langsung melalui fitur Chat di P-Njemin setelah permintaan sewamu disetujui.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Apakah ada biaya tambahan selain harga sewa?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Saat ini tidak ada biaya platform tambahan. Total biaya yang kamu bayar adalah harga sewa per hari × durasi sewa. Biaya lain (seperti ongkos antar) bisa didiskusikan langsung dengan pemilik via chat.</div>
+        </div>
+    </div>
+
+    <!-- KERUSAKAN -->
+    <div class="faq-section" id="kerusakan">
+        <div class="faq-section-title"><i class="fas fa-shield-alt" style="color:var(--primary)"></i> Kerusakan & Sengketa Barang</div>
+
+        <div class="card" style="padding:1.5rem;margin-bottom:1rem;background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa">
+            <div style="display:flex;gap:0.8rem;align-items:flex-start">
+                <div style="width:40px;height:40px;background:#fed7aa;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">🛡️</div>
+                <div>
+                    <p style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem">Sistem Serah Terima Digital</p>
+                    <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.6">P-Njemin dilengkapi fitur foto kondisi barang 2x — sebelum diserahkan dan setelah dikembalikan — sebagai bukti objektif kondisi barang.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Apa yang terjadi jika barang rusak saat saya pinjam?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">
+                Jika barang rusak, pemilik bisa melaporkan melalui fitur Laporan Denda setelah transaksi selesai. Admin akan meninjau foto kondisi awal dan akhir barang untuk memutuskan apakah denda dikenakan. Pastikan kamu menjaga barang dengan baik selama masa peminjaman.
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Bagaimana jika barang yang saya terima tidak sesuai deskripsi?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Kamu bisa melaporkan masalah melalui fitur <strong>Laporkan Masalah</strong> di halaman Riwayat selama status masih <strong>Sedang Dipinjam</strong>. Laporan akan dikirim langsung ke pemilik untuk ditanggapi.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Bagaimana cara mengajukan pengembalian barang?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">
+                <ol class="step-list" style="margin-top:0.3rem">
+                    <li>Buka halaman <strong>Riwayat</strong>.</li>
+                    <li>Klik tombol <strong>Kembalikan Barang</strong> pada transaksi yang aktif.</li>
+                    <li>Pemilik akan mendapat notifikasi dan mengkonfirmasi pengembalian beserta foto kondisi akhir barang.</li>
+                    <li>Setelah dikonfirmasi, transaksi berubah menjadi <strong>Selesai</strong>.</li>
+                </ol>
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Akun saya diblokir, apa yang harus dilakukan?
+                <i class="fas fa-chevron-down arrow"></i>
+            </div>
+            <div class="faq-a">Jika akunmu diblokir oleh admin, kamu bisa mengajukan <strong>Banding</strong> melalui halaman yang muncul setelah login. Jelaskan alasanmu, dan admin akan meninjau dalam 1–3 hari kerja.</div>
+        </div>
+    </div>
+
+    <!-- Kontak -->
+    <div style="background:var(--secondary);border-radius:var(--radius);padding:1.8rem;text-align:center;color:white">
+        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;margin-bottom:0.4rem">Masih ada pertanyaan?</div>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-bottom:1.2rem">Tim kami siap membantu kamu</p>
+        <div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap">
+            <a href="{{ url_for('tentang') }}" class="btn" style="background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.25)"><i class="fas fa-info-circle"></i> Tentang Kami</a>
+            <a href="{{ url_for('register') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Daftar Sekarang</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleFaq(el) {
+    const answer = el.nextElementSibling;
+    const isOpen = el.classList.contains('open');
+    // Tutup semua dulu
+    document.querySelectorAll('.faq-q.open').forEach(q => {
+        q.classList.remove('open');
+        q.nextElementSibling.classList.remove('open');
+    });
+    if (!isOpen) {
+        el.classList.add('open');
+        answer.classList.add('open');
+    }
+}
+// Auto-open section dari anchor
+window.addEventListener('load', () => {
+    const hash = window.location.hash;
+    if (hash) {
+        const target = document.querySelector(hash);
+        if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+});
+</script>
+{% endblock %}

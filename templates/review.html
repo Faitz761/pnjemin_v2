@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Beri Ulasan - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.review-wrap { max-width: 500px; margin: 0 auto; padding: 1.5rem; }
+.star-rating { display: flex; gap: 0.5rem; font-size: 2.2rem; margin: 0.5rem 0 1rem; }
+.star-rating label { cursor: pointer; color: #ddd; transition: color 0.15s; }
+.star-rating input { display: none; }
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label { color: var(--accent); }
+.star-rating { flex-direction: row-reverse; justify-content: flex-end; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="review-wrap">
+    <a href="{{ url_for('riwayat') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-star" style="color:var(--accent)"></i> Beri Ulasan</div>
+        <div class="card-body">
+            <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1.2rem">Bagaimana pengalamanmu meminjam <strong>{{ transaksi.nama_barang }}</strong>?</p>
+            <form method="post">
+                <div class="form-group">
+                    <label>Rating</label>
+                    <div class="star-rating">
+                        <input type="radio" name="rating" id="s5" value="5"><label for="s5">★</label>
+                        <input type="radio" name="rating" id="s4" value="4"><label for="s4">★</label>
+                        <input type="radio" name="rating" id="s3" value="3" checked><label for="s3">★</label>
+                        <input type="radio" name="rating" id="s2" value="2"><label for="s2">★</label>
+                        <input type="radio" name="rating" id="s1" value="1"><label for="s1">★</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Komentar (opsional)</label>
+                    <textarea name="komentar" class="form-control" rows="4" placeholder="Ceritakan pengalamanmu..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+                    <i class="fas fa-paper-plane"></i> Kirim Ulasan
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

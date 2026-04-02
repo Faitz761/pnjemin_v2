@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Laporkan Masalah - P-Njemin{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:0 auto;padding:1.5rem">
+    <a href="{{ url_for('riwayat') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-flag" style="color:var(--danger)"></i> Laporkan Masalah</div>
+        <div class="card-body">
+            <div style="background:var(--bg);padding:0.8rem;border-radius:var(--radius-sm);margin-bottom:1.2rem;font-size:0.88rem">
+                Transaksi: <strong>#TRX{{ '%04d'|format(transaksi.id) }}</strong> &mdash; {{ transaksi.nama_barang }}
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fas fa-exclamation-triangle"></i> Jenis Masalah</label>
+                    <div style="display:grid;gap:0.5rem;margin-top:0.4rem">
+                        {% for jenis in ['Barang Rusak', 'Barang Tidak Sesuai', 'Penipuan', 'Lainnya'] %}
+                        <label style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88rem;font-weight:600;transition:all 0.2s">
+                            <input type="radio" name="jenis_masalah" value="{{ jenis }}" {% if loop.first %}checked{% endif %} style="accent-color:var(--primary)">
+                            {{ jenis }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Deskripsi Masalah</label>
+                    <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan masalah yang kamu alami..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Upload Foto Bukti (opsional)</label>
+                    <input type="file" name="foto_bukti" class="form-control" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">
+                    <i class="fas fa-paper-plane"></i> Kirim Laporan
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

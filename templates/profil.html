@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Profil - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.profil-wrap { max-width: 700px; margin: 0 auto; padding: 1.5rem; }
+.profil-hero { background: linear-gradient(135deg, var(--secondary), #16213e); border-radius: var(--radius); padding: 1.8rem; color: white; display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; }
+.avatar-big { width: 70px; height: 70px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; color: white; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.3); }
+.profil-name { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; }
+.profil-meta { font-size: 0.82rem; color: rgba(255,255,255,0.65); }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; text-align: center; }
+.stat-card strong { display: block; font-family: 'Syne', sans-serif; font-size: 1.4rem; color: var(--primary); }
+.stat-card span { font-size: 0.78rem; color: var(--text-muted); }
+.info-row { display: flex; gap: 0.6rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--text-muted); width: 130px; flex-shrink: 0; font-weight: 600; }
+.notif-list { margin-top: 1.5rem; }
+.notif-item { display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.7rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.notif-item:last-child { border-bottom: none; }
+.notif-icon { color: var(--primary); margin-top: 2px; }
+.tipe-badge { display: inline-block; padding: 0.25rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+.tipe-peminjam { background: #dbeafe; color: #1d4ed8; }
+.tipe-pemilik { background: #dcfce7; color: #15803d; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="profil-wrap">
+    <div class="profil-hero">
+        <div class="avatar-big">{{ user.nama[0].upper() }}</div>
+        <div style="flex:1">
+            <div class="profil-name">{{ user.nama }}</div>
+            <div class="profil-meta">{{ user.email }}</div>
+            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+                <span class="tipe-badge {% if user.tipe_akun == 'pemilik' %}tipe-pemilik{% else %}tipe-peminjam{% endif %}">
+                    {{ 'Pemilik Barang' if user.tipe_akun == 'pemilik' else 'Peminjam' }}
+                </span>
+                <span style="background:rgba(255,255,255,0.15);color:white;padding:0.25rem 0.8rem;border-radius:20px;font-size:0.78rem;font-weight:700">
+                    ★ {{ "%.1f"|format(user.rating) if user.rating else "Baru" }}
+                </span>
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <a href="{{ url_for('edit_profil') }}" class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.4);color:white"><i class="fas fa-edit"></i> Edit Profil</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card"><strong>{{ user.total_transaksi }}</strong><span>Total Transaksi</span></div>
+        <div class="stat-card"><strong>{{ "%.1f"|format(user.rating) if user.rating else "—" }}</strong><span>Rating Peminjam</span></div>
+        <div class="stat-card">
+            <strong style="font-size:0.9rem;color:{% if user.status == 'aktif' %}var(--success){% else %}var(--danger){% endif %}">
+                {{ user.status.capitalize() }}
+            </strong>
+            <span>Status Akun</span>
+        </div>
+    </div>
+
+    {% if ulasan_peminjam %}
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header"><i class="fas fa-user-check" style="color:var(--primary)"></i> Ulasan sebagai Peminjam
+            {% if rating_peminjam and rating_peminjam['cnt'] %}
+            <span style="font-size:0.78rem;color:var(--text-muted);margin-left:0.5rem">
+                ⭐ {{ "%.1f"|format(rating_peminjam['avg_r']) }} dari {{ rating_peminjam['cnt'] }} ulasan
+            </span>
+            {% endif %}
+        </div>
+        <div class="card-body" style="padding:0.5rem 1.2rem">
+            {% for u in ulasan_peminjam %}
+            <div style="padding:0.7rem 0;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-weight:600;font-size:0.85rem">{{ u.nama_pemilik }}</span>
+                    <span style="color:#f59e0b;font-size:0.9rem">{{ '★' * u.rating }}{{ '☆' * (5 - u.rating) }}</span>
+                </div>
+                <div style="font-size:0.78rem;color:var(--text-muted)">{{ u.nama_barang }} &middot; {{ u.created_at[:10] }}</div>
+                {% if u.komentar %}<div style="font-size:0.85rem;margin-top:0.3rem;color:var(--text)">{{ u.komentar }}</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header"><i class="fas fa-user" style="color:var(--primary)"></i> Informasi Akun</div>
+        <div class="card-body">
+            <div class="info-row"><span class="info-label">Nama</span><span>{{ user.nama }}</span></div>
+            <div class="info-row"><span class="info-label">Email</span><span>{{ user.email }}</span></div>
+            <div class="info-row"><span class="info-label">No. HP</span><span>{{ user.no_hp or '—' }}</span></div>
+            <div class="info-row"><span class="info-label">Alamat</span><span>{{ user.alamat or '—' }}</span></div>
+            <div class="info-row"><span class="info-label">Tipe Akun</span><span>{{ 'Pemilik Barang' if user.tipe_akun == 'pemilik' else 'Peminjam' }}</span></div>
+            <div class="info-row"><span class="info-label">Bergabung Sejak</span><span>{{ user.created_at[:10] }}</span></div>
+        </div>
+    </div>
+
+    {% if notifikasi %}
+    <div class="card">
+        <div class="card-header"><i class="fas fa-bell" style="color:var(--warning)"></i> Notifikasi</div>
+        <div class="card-body" style="padding:0.5rem 1.5rem">
+            {% for n in notifikasi %}
+            <div class="notif-item">
+                <i class="fas fa-circle-dot notif-icon"></i>
+                <div>
+                    <div>{{ n.pesan }}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.15rem">{{ n.created_at[:16] }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

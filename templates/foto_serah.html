@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Foto Kondisi Awal - P-Njemin{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:0 auto;padding:1.5rem">
+    <a href="{{ url_for('barang_saya') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header" style="color:var(--primary)">
+            <i class="fas fa-camera"></i> Foto Kondisi Barang Sebelum Diserahkan
+        </div>
+        <div class="card-body">
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1.2rem;font-size:0.85rem;color:#15803d">
+                <i class="fas fa-info-circle"></i> <strong>Serah Terima Digital</strong><br>
+                Foto ini akan jadi bukti kondisi <strong>{{ transaksi.nama_barang }}</strong> sebelum dipinjamkan.
+                Digunakan sebagai perbandingan jika ada klaim kerusakan.
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Upload Foto Kondisi Awal</label>
+                    <input type="file" name="foto" class="form-control" accept="image/*" required>
+                    <small style="color:var(--text-muted);font-size:0.78rem">
+                        Foto semua sisi barang dari berbagai sudut. Pastikan pencahayaan cukup.
+                    </small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+                    <i class="fas fa-camera"></i> Simpan Foto Kondisi Awal
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

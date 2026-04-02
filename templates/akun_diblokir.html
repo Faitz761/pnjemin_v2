@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Akun Diblokir - P-Njemin{% endblock %}
+{% block content %}
+<div style="max-width:500px;margin:3rem auto;padding:1.5rem;text-align:center">
+    <div style="background:white;border-radius:var(--radius);border:1px solid var(--border);padding:2.5rem;box-shadow:var(--shadow)">
+        <div style="width:70px;height:70px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:1.8rem">🚫</div>
+        <h2 style="font-family:'Syne',sans-serif;color:var(--secondary);margin-bottom:0.5rem">Akun Kamu Diblokir</h2>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem">Akun kamu telah diblokir oleh admin. Kamu tidak dapat menggunakan layanan P-Njemin saat ini.</p>
+
+        {% if banding_ada %}
+        <div class="alert alert-info" style="text-align:left">
+            <i class="fas fa-clock"></i> Banding kamu sedang diproses oleh admin. Harap tunggu keputusan.
+        </div>
+        {% else %}
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:1.2rem;text-align:left;margin-bottom:1.2rem">
+            <p style="font-weight:700;font-size:0.9rem;margin-bottom:0.8rem"><i class="fas fa-gavel" style="color:var(--primary)"></i> Ajukan Banding</p>
+            <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.8rem">Jika kamu merasa pemblokiran ini tidak adil, ajukan banding ke admin.</p>
+            <form method="post" action="{{ url_for('ajukan_banding') }}">
+                <div class="form-group">
+                    <label style="font-size:0.83rem;font-weight:600">Alasan Banding</label>
+                    <textarea name="alasan" class="form-control" rows="3" placeholder="Jelaskan mengapa akunmu seharusnya tidak diblokir..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+                    <i class="fas fa-paper-plane"></i> Kirim Banding
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}" class="btn btn-sm" style="color:var(--text-muted);border:1px solid var(--border)">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>
+{% endblock %}

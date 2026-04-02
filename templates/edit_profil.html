@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profil - P-Njemin{% endblock %}
+{% block content %}
+<div style="max-width:500px;margin:0 auto;padding:1.5rem">
+    <a href="{{ url_for('profil') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali ke profil
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-edit" style="color:var(--primary)"></i> Edit Profil</div>
+        <div class="card-body">
+            <form method="post">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" name="nama" class="form-control" value="{{ user.nama }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Email <small style="color:var(--text-muted)">(tidak dapat diubah)</small></label>
+                    <input type="email" class="form-control" value="{{ user.email }}" disabled style="background:var(--bg);color:var(--text-muted)">
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP</label>
+                    <input type="text" name="no_hp" class="form-control" value="{{ user.no_hp or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Alamat</label>
+                    <input type="text" name="alamat" class="form-control" value="{{ user.alamat or '' }}">
+                </div>
+                <div style="display:flex;gap:0.8rem">
+                    <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center"><i class="fas fa-save"></i> Simpan</button>
+                    <a href="{{ url_for('profil') }}" class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-muted)">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

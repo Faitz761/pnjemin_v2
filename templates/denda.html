@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Laporkan Denda - P-Njemin{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:0 auto;padding:1.5rem">
+    <a href="{{ url_for('barang_saya') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header" style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i> Laporkan Kerusakan / Denda</div>
+        <div class="card-body">
+            <div style="background:#fff3ee;border:1px solid var(--primary);border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1.2rem;font-size:0.88rem">
+                <strong>Transaksi #TRX{{ '%04d'|format(transaksi.id) }}</strong> &mdash; {{ transaksi.nama_barang }}
+                <div style="color:var(--text-muted);font-size:0.78rem;margin-top:0.2rem">Peminjam: {{ transaksi.nama_peminjam if transaksi.nama_peminjam is defined else '—' }}</div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.2rem">
+                Laporkan jika barang dikembalikan dalam kondisi rusak atau ada masalah lainnya. Admin akan menindaklanjuti laporan ini.
+            </p>
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fas fa-exclamation-circle"></i> Jenis Masalah</label>
+                    <div style="display:grid;gap:0.5rem;margin-top:0.4rem">
+                        {% for jenis in ['Barang Rusak','Barang Hilang','Barang Tidak Dikembalikan','Lainnya'] %}
+                        <label style="display:flex;align-items:center;gap:0.6rem;padding:0.65rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88rem;font-weight:600;transition:all 0.2s">
+                            <input type="radio" name="jenis_masalah" value="{{ jenis }}" {% if loop.first %}checked{% endif %} style="accent-color:var(--danger)">
+                            {{ jenis }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Deskripsi Kerusakan</label>
+                    <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan kondisi kerusakan secara detail..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Foto Bukti Kerusakan</label>
+                    <input type="file" name="foto_bukti" class="form-control" accept="image/*">
+                    <small style="color:var(--text-muted);font-size:0.78rem">Upload foto kondisi barang setelah dikembalikan</small>
+                </div>
+                <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">
+                    <i class="fas fa-paper-plane"></i> Kirim Laporan Denda
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

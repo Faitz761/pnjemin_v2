@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Barang Saya - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.owner-wrap { max-width: 950px; margin: 0 auto; padding: 1.5rem; }
+.booking-alert { background: #fff3ee; border: 1px solid var(--primary); border-radius: var(--radius-sm); padding: 0.9rem 1.1rem; margin-bottom: 0.7rem; display: flex; align-items: center; gap: 0.8rem; justify-content: space-between; flex-wrap:wrap; }
+.booking-info { flex: 1; font-size: 0.88rem; min-width:200px; }
+.booking-info strong { color: var(--secondary); }
+.booking-actions { display: flex; gap: 0.5rem; flex-shrink: 0; flex-wrap:wrap; }
+.barang-list-item { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--border); }
+.barang-list-item:last-child { border-bottom: none; }
+.barang-list-thumb { width: 56px; height: 56px; border-radius: var(--radius-sm); object-fit: cover; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #bbb; overflow: hidden; flex-shrink: 0; }
+.barang-list-thumb img { width: 56px; height: 56px; object-fit: cover; }
+.barang-list-info { flex: 1; }
+.barang-list-info .nama { font-weight: 700; font-size: 0.92rem; }
+.barang-list-info .meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+.aktif-row { padding:0.85rem 1rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:0.8rem; flex-wrap:wrap; }
+.aktif-row:last-child { border-bottom:none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="owner-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+        <div class="page-header" style="padding:0;margin:0">
+            <h1><i class="fas fa-store" style="color:var(--primary)"></i> Barang Saya</h1>
+            <p>Kelola barang dan permintaan booking</p>
+        </div>
+        <a href="{{ url_for('upload_barang') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Barang</a>
+    </div>
+
+    <!-- BOOKING MASUK -->
+    {% if bookings %}
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header" style="color:var(--primary)"><i class="fas fa-bell"></i> Permintaan Booking ({{ bookings|length }})</div>
+        <div class="card-body" style="padding:1rem">
+            {% for b in bookings %}
+            <div class="booking-alert">
+                <div class="booking-info">
+                    <strong>{{ b.nama_peminjam }}</strong> ingin meminjam <strong>{{ b.nama_barang }}</strong>
+                    <div style="color:var(--text-muted);font-size:0.78rem;margin-top:0.2rem">
+                        {{ b.tanggal_pinjam }} &middot; {{ b.durasi }} hari &middot;
+                        Rp {{ "{:,.0f}".format(b.total_biaya) }} &middot; {{ b.no_hp or '—' }}
+                    </div>
+                </div>
+                <div class="booking-actions">
+                    <a href="{{ url_for('setujui_booking', id_transaksi=b.id) }}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Setujui</a>
+                    <a href="{{ url_for('tolak_booking', id_transaksi=b.id) }}" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Tolak</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- LAPORAN MASUK DARI PEMINJAM -->
+    {% if laporan_masuk %}
+    <div class="card" style="margin-bottom:1.5rem;border:1px solid #fca5a5">
+        <div class="card-header" style="color:#dc2626"><i class="fas fa-exclamation-circle"></i> Laporan Masalah dari Peminjam ({{ laporan_masuk|length }})</div>
+        <div class="card-body" style="padding:0.5rem">
+            {% for l in laporan_masuk %}
+            <div class="aktif-row">
+                <div>
+                    <div style="font-weight:700;font-size:0.88rem">{{ l.nama_barang }}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted)">Dari: {{ l.nama_peminjam }} &middot; {{ l.jenis_masalah }}</div>
+                    <div style="font-size:0.82rem;margin-top:0.2rem;color:var(--text)">{{ l.deskripsi }}</div>
+                    {% if l.foto_bukti %}
+                    <a href="{{ url_for('static', filename='images/uploads/' + l.foto_bukti) }}" target="_blank" style="font-size:0.75rem;color:var(--primary)"><i class="fas fa-image"></i> Lihat Foto Bukti</a>
+                    {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('respon_laporan', id_laporan=l.id) }}" style="display:flex;gap:0.4rem;align-items:flex-end;flex-direction:column;min-width:200px">
+                    <textarea name="respon" class="form-control" rows="2" placeholder="Tuliskan responmu..." required style="font-size:0.82rem"></textarea>
+                    <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center"><i class="fas fa-reply"></i> Kirim Respon</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- TRANSAKSI AKTIF (sedang dipinjam / menunggu pengembalian) -->
+    {% if aktif %}
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header" style="color:var(--primary)"><i class="fas fa-handshake"></i> Transaksi Aktif</div>
+        <div class="card-body" style="padding:0.5rem">
+            {% for t in aktif %}
+            <div class="aktif-row">
+                <div>
+                    <div style="font-weight:700;font-size:0.88rem">{{ t.nama_barang }}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted)">
+                        Peminjam: <strong>{{ t.nama_peminjam }}</strong> &middot; {{ t.no_hp or '—' }} &middot; {{ t.created_at[:10] }}
+                    </div>
+                    <div style="margin-top:0.3rem">
+                        {% if t.status == 'sedang_dipinjam' %}
+                            <span class="badge badge-primary"><i class="fas fa-handshake"></i> Sedang Dipinjam</span>
+                            {% if not t.foto_serah %}
+                            <span style="font-size:0.72rem;color:#f97316;margin-left:0.3rem"><i class="fas fa-exclamation-triangle"></i> Belum ada foto kondisi awal</span>
+                            {% else %}
+                            <span style="font-size:0.72rem;color:green;margin-left:0.3rem"><i class="fas fa-check"></i> Foto kondisi awal tersimpan</span>
+                            {% endif %}
+                        {% elif t.status == 'menunggu_pengembalian' %}
+                            <span class="badge badge-warning"><i class="fas fa-undo"></i> Mengajukan Pengembalian</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="display:flex;gap:0.4rem;flex-direction:column;align-items:flex-end">
+                    {% if t.status == 'sedang_dipinjam' and not t.foto_serah %}
+                    <a href="{{ url_for('foto_serah', id_transaksi=t.id) }}" class="btn btn-outline btn-sm"><i class="fas fa-camera"></i> Foto Kondisi Awal</a>
+                    {% endif %}
+                    {% if t.status == 'menunggu_pengembalian' %}
+                    <a href="{{ url_for('konfirmasi_pengembalian', id_transaksi=t.id) }}" class="btn btn-success btn-sm"><i class="fas fa-check-circle"></i> Konfirmasi Diterima</a>
+                    {% endif %}
+                    <a href="{{ url_for('chat_detail', partner_id=t.id_peminjam) }}" class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-muted)"><i class="fas fa-comment"></i> Chat</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- TRANSAKSI SELESAI → LAPORAN DENDA -->
+    {% if selesai %}
+    <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header" style="color:var(--danger)"><i class="fas fa-flag"></i> Riwayat Selesai & Denda</div>
+        <div class="card-body" style="padding:0.5rem">
+            {% for t in selesai %}
+            <div class="aktif-row">
+                <div>
+                    <div style="font-weight:700;font-size:0.88rem">{{ t.nama_barang }}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted)">Peminjam: {{ t.nama_peminjam }} &middot; {{ t.created_at[:10] }}</div>
+                    {% if t.foto_serah or t.foto_terima %}
+                    <div style="display:flex;gap:0.6rem;margin-top:0.4rem">
+                        {% if t.foto_serah %}
+                        <a href="{{ url_for('static', filename='images/uploads/' + t.foto_serah) }}" target="_blank" style="font-size:0.72rem;color:green"><i class="fas fa-image"></i> Foto Awal</a>
+                        {% endif %}
+                        {% if t.foto_terima %}
+                        <a href="{{ url_for('static', filename='images/uploads/' + t.foto_terima) }}" target="_blank" style="font-size:0.72rem;color:var(--primary)"><i class="fas fa-image"></i> Foto Akhir</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% if t.id not in denda_done %}
+                <div style="display:flex;gap:0.5rem;flex-direction:column;align-items:flex-end">
+                    <a href="{{ url_for('denda', id_transaksi=t.id) }}" class="btn btn-danger btn-sm"><i class="fas fa-flag"></i> Laporkan Denda</a>
+                    {% if t.id not in reviews_peminjam_done %}
+                    <a href="{{ url_for('review_peminjam', id_transaksi=t.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-star"></i> Beri Ulasan Peminjam</a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div style="display:flex;gap:0.5rem;flex-direction:column;align-items:flex-end">
+                    <span class="badge badge-secondary">Sudah dilaporkan</span>
+                    {% if t.id not in reviews_peminjam_done %}
+                    <a href="{{ url_for('review_peminjam', id_transaksi=t.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-star"></i> Beri Ulasan Peminjam</a>
+                    {% else %}
+                    <span class="badge badge-secondary" style="margin-top:0.2rem">Sudah diulas</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- DAFTAR BARANG -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-boxes" style="color:var(--primary)"></i> Daftar Barang ({{ barang|length }})</div>
+        {% if barang %}
+        {% for b in barang %}
+        <div class="barang-list-item">
+            <div class="barang-list-thumb">
+                {% if b.foto %}<img src="{{ url_for('static', filename='images/uploads/' + b.foto) }}" alt="">
+                {% else %}<i class="fas fa-box"></i>{% endif %}
+            </div>
+            <div class="barang-list-info">
+                <div class="nama">{{ b.nama_barang }}</div>
+                <div class="meta">
+                    Rp {{ "{:,.0f}".format(b.harga_sewa) }}/hari &middot;
+                    Stok {{ b.stok }} &middot; {{ b.kategori or '—' }} &middot;
+                    <span style="color:{% if b.status == 'tersedia' %}var(--success){% else %}var(--danger){% endif %}">{{ b.status }}</span>
+                    &middot; <span style="color:#f97316"><i class="fas fa-fire" style="font-size:0.7rem"></i> {{ b.total_disewa }}x</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-shrink:0">
+                <a href="{{ url_for('edit_barang', id_barang=b.id) }}" class="btn btn-outline btn-sm"><i class="fas fa-edit"></i> Edit</a>
+                <a href="{{ url_for('detail_barang', id=b.id) }}" class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-muted)"><i class="fas fa-eye"></i></a>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="text-align:center;padding:2.5rem;color:var(--text-muted)">
+            <i class="fas fa-box-open" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.8rem"></i>
+            <p>Belum ada barang. <a href="{{ url_for('upload_barang') }}" style="color:var(--primary);font-weight:600">Tambah sekarang!</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

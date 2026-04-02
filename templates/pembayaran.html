@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Pembayaran - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.pay-wrap { max-width: 520px; margin: 0 auto; padding: 1.5rem; }
+.pay-info-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.pay-info-row:last-child { border-bottom: none; }
+.pay-info-row span:first-child { color: var(--text-muted); }
+.pay-info-row span:last-child { font-weight: 600; }
+.total-row { display: flex; justify-content: space-between; padding: 0.9rem 0; font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+.upload-area { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--text-muted); font-size: 0.88rem; }
+.upload-area:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.metode-badge { display:inline-flex; align-items:center; gap:0.5rem; background:var(--primary-light); color:var(--primary); border:1px solid var(--primary); border-radius:var(--radius-sm); padding:0.5rem 1rem; font-weight:700; font-size:0.9rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="pay-wrap">
+    <a href="{{ url_for('riwayat') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-wallet" style="color:var(--primary)"></i> Pembayaran</div>
+        <div class="card-body">
+            <div class="pay-info-row"><span>Barang</span><span>{{ transaksi.nama_barang }}</span></div>
+            <div class="pay-info-row"><span>Durasi</span><span>{{ transaksi.durasi }} hari</span></div>
+            <div class="pay-info-row"><span>Metode Pengambilan</span><span>{{ transaksi.metode_pengambilan }}</span></div>
+            <div class="pay-info-row">
+                <span>Metode Pembayaran</span>
+                <span class="metode-badge">
+                    {% set m = transaksi.metode_pembayaran|lower %}
+                    {% if 'cash' in m or 'cod' in m or 'tunai' in m %}
+                        <i class="fas fa-money-bill-wave"></i> {{ transaksi.metode_pembayaran }}
+                    {% elif 'qris' in m %}
+                        <i class="fas fa-qrcode"></i> {{ transaksi.metode_pembayaran }}
+                    {% else %}
+                        <i class="fas fa-university"></i> {{ transaksi.metode_pembayaran }}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="total-row"><span>Total Bayar</span><span>Rp {{ "{:,.0f}".format(transaksi.total_biaya) }}</span></div>
+
+            <hr>
+            {% set m = transaksi.metode_pembayaran|lower %}
+            {% if 'cash' in m or 'cod' in m or 'tunai' in m %}
+            <!-- COD/Cash — langsung konfirmasi -->
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1rem;font-size:0.85rem;color:#15803d">
+                <i class="fas fa-info-circle"></i> <strong>Pembayaran Cash / COD</strong><br>
+                Bayar langsung kepada pemilik saat serah terima barang. Klik konfirmasi untuk melanjutkan.
+            </div>
+            <form method="post">
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">
+                    <i class="fas fa-check-circle"></i> Konfirmasi Pembayaran Cash
+                </button>
+            </form>
+            {% else %}
+            <!-- QRIS / Transfer — upload bukti -->
+            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1rem;font-size:0.85rem;color:#92400e">
+                <i class="fas fa-info-circle"></i> <strong>Transfer / QRIS</strong><br>
+                Lakukan pembayaran ke rekening/QR pemilik, lalu upload buktinya di bawah.
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fas fa-upload"></i> Upload Bukti Pembayaran</label>
+                    <label class="upload-area" for="bukti_input">
+                        <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem;display:block;margin-bottom:0.5rem"></i>
+                        Klik untuk upload bukti transfer / screenshot QRIS
+                        <input type="file" id="bukti_input" name="bukti_pembayaran" accept="image/*" style="display:none" onchange="previewFile(this)">
+                    </label>
+                    <div id="preview_bukti" style="margin-top:0.5rem;display:none">
+                        <img id="preview_img" style="max-width:100%;border-radius:var(--radius-sm);max-height:200px">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:0.5rem">
+                    <i class="fas fa-check-circle"></i> Kirim Bukti Pembayaran
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function previewFile(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview_img').src = e.target.result;
+            document.getElementById('preview_bukti').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

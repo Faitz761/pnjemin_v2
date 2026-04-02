@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Chat - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.chat-wrap { max-width: 680px; margin: 0 auto; padding: 1.5rem; }
+.chat-item {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1rem 1.2rem; border-bottom: 1px solid var(--border);
+    text-decoration: none; color: var(--text); transition: background 0.15s;
+}
+.chat-item:hover { background: var(--bg); }
+.chat-item:last-child { border-bottom: none; }
+.chat-avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
+}
+.chat-info { flex: 1; min-width: 0; }
+.chat-name { font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; gap: 0.5rem; }
+.chat-preview { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.15rem; }
+.chat-barang { font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-top: 0.1rem; }
+.chat-time { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+.unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-state i { font-size: 2.5rem; opacity: 0.25; display: block; margin-bottom: 0.8rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="chat-wrap">
+    <div class="page-header">
+        <h1><i class="fas fa-comment-dots" style="color:var(--primary)"></i> Chat</h1>
+        <p>Percakapan kamu dengan pemilik / peminjam barang</p>
+    </div>
+    <div class="card">
+        {% if chats %}
+        {% for c in chats %}
+        <a href="{{ url_for('chat_detail', partner_id=c.partner_id, id_barang=c.barang_id) if c.barang_id else url_for('chat_detail', partner_id=c.partner_id) }}" class="chat-item">
+            <div class="chat-avatar">{{ c.partner_nama[0].upper() }}</div>
+            <div class="chat-info">
+                <div class="chat-name">
+                    {{ c.partner_nama }}
+                    {% if c.unread > 0 %}<span class="badge badge-primary" style="font-size:0.65rem">{{ c.unread }} baru</span>{% endif %}
+                </div>
+                {% if c.nama_barang %}<div class="chat-barang"><i class="fas fa-box" style="font-size:0.7rem"></i> {{ c.nama_barang }}</div>{% endif %}
+                <div class="chat-preview">{{ c.last_pesan }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem">
+                <div class="chat-time">{{ c.last_time[11:16] if c.last_time else '' }}</div>
+                {% if c.unread > 0 %}<div class="unread-dot"></div>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-comment-slash"></i>
+            <p>Belum ada chat. Mulai chat dari halaman detail barang!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

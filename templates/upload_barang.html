@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Upload Barang - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.upload-wrap { max-width: 580px; margin: 0 auto; padding: 1.5rem; }
+.foto-upload-area {
+    border: 2px dashed var(--border); border-radius: var(--radius-sm);
+    padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;
+    color: var(--text-muted); font-size: 0.88rem; position: relative;
+}
+.foto-upload-area:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.foto-upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.foto-preview { display: none; margin-top: 1rem; }
+.foto-preview img { max-width: 100%; border-radius: var(--radius-sm); max-height: 220px; object-fit: cover; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="upload-wrap">
+    <a href="{{ url_for('barang_saya') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-upload" style="color:var(--primary)"></i> Upload Barang Baru</div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label><i class="fas fa-camera"></i> Foto Barang</label>
+                    <div class="foto-upload-area" id="fotoArea">
+                        <input type="file" name="foto" accept="image/*" onchange="previewFoto(this)">
+                        <i class="fas fa-image" style="font-size:2rem;display:block;margin-bottom:0.5rem"></i>
+                        Klik untuk upload foto barang
+                    </div>
+                    <div class="foto-preview" id="fotoPreview">
+                        <img id="previewImg" src="" alt="Preview">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nama Barang</label>
+                    <input type="text" name="nama_barang" class="form-control" placeholder="Contoh: Tenda Camping 4 Orang" required>
+                </div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select name="kategori" class="form-control" required>
+                            <option value="">Pilih kategori</option>
+                            <option>Elektronik</option>
+                            <option>Olahraga & Outdoor</option>
+                            <option>Alat Rumah</option>
+                            <option>Kendaraan</option>
+                            <option>Pakaian</option>
+                            <option>Buku</option>
+                            <option>Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Stok</label>
+                        <input type="number" name="stok" class="form-control" min="1" value="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Harga Sewa <small style="color:var(--text-muted)">(per hari)</small></label>
+                    <div style="position:relative">
+                        <span style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);font-weight:600;color:var(--text-muted);font-size:0.88rem">Rp</span>
+                        <input type="number" name="harga_sewa" class="form-control" style="padding-left:2.5rem" placeholder="0" min="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi / Kota</label>
+                    <input type="text" name="lokasi" class="form-control" placeholder="Contoh: Jakarta Selatan" required>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan kondisi, kelengkapan, dan syarat peminjaman barang..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload Barang
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function previewFoto(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('fotoPreview').style.display = 'block';
+            document.getElementById('fotoArea').style.borderColor = 'var(--primary)';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

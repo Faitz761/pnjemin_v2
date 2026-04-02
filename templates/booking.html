@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Form Peminjaman - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.form-wrap { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+.barang-preview { display: flex; align-items: center; gap: 1rem; background: var(--bg); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; border: 1px solid var(--border); }
+.barang-preview-img { width: 70px; height: 70px; object-fit: cover; border-radius: var(--radius-sm); background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 1.5rem; flex-shrink: 0; overflow: hidden; }
+.barang-preview-img img { width: 70px; height: 70px; object-fit: cover; }
+.barang-preview-info h3 { font-weight: 700; font-size: 0.95rem; }
+.barang-preview-info p { font-size: 0.85rem; color: var(--text-muted); }
+.harga-highlight { color: var(--primary); font-weight: 800; font-size: 1rem; }
+.radio-group { display: grid; gap: 0.6rem; }
+.radio-option { position: relative; }
+.radio-option input[type=radio] { position: absolute; opacity: 0; }
+.radio-label {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.7rem 1rem; border: 2px solid var(--border); border-radius: var(--radius-sm);
+    cursor: pointer; transition: all 0.2s; font-size: 0.88rem; font-weight: 600;
+}
+.radio-label i { color: var(--text-muted); width: 18px; text-align: center; }
+.radio-option input:checked + .radio-label { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.radio-option input:checked + .radio-label i { color: var(--primary); }
+.cost-summary { background: var(--secondary); color: white; padding: 1.2rem; border-radius: var(--radius-sm); margin: 1.2rem 0; }
+.cost-row { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.4rem; color: rgba(255,255,255,0.7); }
+.cost-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: var(--accent); padding-top: 0.6rem; border-top: 1px solid rgba(255,255,255,0.15); margin-top: 0.4rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="form-wrap">
+    <a href="{{ url_for('detail_barang', id=barang.id) }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali ke detail
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-calendar-check" style="color:var(--primary)"></i> Form Peminjaman</div>
+        <div class="card-body">
+            <!-- BARANG PREVIEW -->
+            <div class="barang-preview">
+                <div class="barang-preview-img">
+                    {% if barang.foto %}
+                    <img src="{{ url_for('static', filename='images/uploads/' + barang.foto) }}" alt="{{ barang.nama_barang }}">
+                    {% else %}<i class="fas fa-box"></i>{% endif %}
+                </div>
+                <div class="barang-preview-info">
+                    <h3>{{ barang.nama_barang }}</h3>
+                    <p><i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> {{ barang.lokasi }}</p>
+                    <p class="harga-highlight">Rp {{ "{:,.0f}".format(barang.harga_sewa) }}/hari</p>
+                </div>
+            </div>
+
+            <form method="post" id="bookingForm">
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Tanggal Mulai Pinjam</label>
+                    <input type="date" name="tanggal_pinjam" id="tanggal_pinjam" class="form-control" required
+                           min="{{ now }}" value="{{ now }}">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-clock"></i> Durasi (hari)</label>
+                    <input type="number" name="durasi" id="durasi" class="form-control" min="1" max="30" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-truck"></i> Metode Pengambilan</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" name="metode_pengambilan" id="cod_pickup" value="COD/Ketemuan" checked>
+                            <label class="radio-label" for="cod_pickup"><i class="fas fa-handshake"></i> COD / Ketemuan langsung</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="metode_pengambilan" id="titik_temu" value="Titik Temu">
+                            <label class="radio-label" for="titik_temu"><i class="fas fa-map-pin"></i> Titik Temu (disepakati)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-credit-card"></i> Metode Pembayaran</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" name="metode_pembayaran" id="cash" value="Cash" checked>
+                            <label class="radio-label" for="cash"><i class="fas fa-money-bill-wave"></i> Cash</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="metode_pembayaran" id="qris" value="QRIS">
+                            <label class="radio-label" for="qris"><i class="fas fa-qrcode"></i> QRIS</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="metode_pembayaran" id="transfer" value="Transfer Bank">
+                            <label class="radio-label" for="transfer"><i class="fas fa-university"></i> Transfer Bank</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cost-summary">
+                    <div class="cost-row"><span>Harga sewa per hari</span><span>Rp {{ "{:,.0f}".format(barang.harga_sewa) }}</span></div>
+                    <div class="cost-row"><span>Durasi</span><span id="durasi_display">1 hari</span></div>
+                    <div class="cost-total"><span>Total Biaya</span><span id="total_display">Rp {{ "{:,.0f}".format(barang.harga_sewa) }}</span></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">
+                    <i class="fas fa-paper-plane"></i> Ajukan Peminjaman
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const harga = {{ barang.harga_sewa }};
+const durInput = document.getElementById('durasi');
+const totalDisplay = document.getElementById('total_display');
+const durasiDisplay = document.getElementById('durasi_display');
+function updateTotal() {
+    const dur = parseInt(durInput.value) || 1;
+    const total = harga * dur;
+    totalDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
+    durasiDisplay.textContent = dur + ' hari';
+}
+durInput.addEventListener('input', updateTotal);
+
+// Set min date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('tanggal_pinjam').min = today;
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login - P🤝Njemin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Syne:wght@800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root { --primary: #FF6B35; --secondary: #1a1a2e; --border: #eaeaea; --radius: 14px; --radius-sm: 8px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--secondary); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; border-radius: var(--radius); width: 380px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .login-header { background: var(--primary); padding: 2rem; text-align: center; }
+        .login-header h1 { font-family: 'Syne', sans-serif; color: white; font-size: 1.5rem; }
+        .login-header p { color: rgba(255,255,255,0.75); font-size: 0.82rem; margin-top: 0.3rem; }
+        .login-body { padding: 1.8rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.83rem; font-weight: 700; margin-bottom: 0.4rem; color: #444; }
+        .form-group input { width: 100%; padding: 0.65rem 0.9rem; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem; outline: none; transition: border 0.2s; }
+        .form-group input:focus { border-color: var(--primary); }
+        .btn-login { width: 100%; padding: 0.75rem; background: var(--secondary); color: white; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-login:hover { background: #2d2d4e; }
+        .alert { padding: 0.7rem 0.9rem; background: #fee2e2; color: #dc2626; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem; }
+        .back-link { display: block; text-align: center; margin-top: 1rem; font-size: 0.82rem; color: #999; text-decoration: none; }
+        .back-link:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="login-header">
+        <h1>P🤝Njemin Admin</h1>
+        <p>Masuk ke panel administrasi</p>
+    </div>
+    <div class="login-body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}<div class="alert">{{ msg }}</div>{% endfor %}{% endif %}
+        {% endwith %}
+        <form method="post">
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email Admin</label>
+                <input type="email" name="email" placeholder="admin@pnjemin.com" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn-login"><i class="fas fa-shield-alt"></i> Login sebagai Admin</button>
+        </form>
+        <a href="{{ url_for('home') }}" class="back-link"><i class="fas fa-arrow-left"></i> Kembali ke website</a>
+    </div>
+</div>
+</body>
+</html>

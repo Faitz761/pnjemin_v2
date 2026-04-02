@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block title %}P-Njemin - Pinjemin Apa Aja{% endblock %}
+{% block extra_css %}
+<style>
+.hero {
+    background: linear-gradient(135deg, var(--secondary) 0%, #16213e 100%);
+    color: white;
+    padding: 2.5rem 0 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    background: var(--primary);
+    border-radius: 50%;
+    opacity: 0.08;
+}
+.hero-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; gap: 2rem; }
+.hero-text h1 { font-family: 'Syne', sans-serif; font-size: 2.2rem; line-height: 1.2; margin-bottom: 0.6rem; }
+.hero-text h1 span { color: var(--primary); }
+.hero-text p { color: rgba(255,255,255,0.65); font-size: 0.95rem; margin-bottom: 1.2rem; }
+.search-bar {
+    display: flex;
+    background: white;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    max-width: 520px;
+}
+.search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.75rem 1.1rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+.search-bar button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0 1.3rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+.search-bar button:hover { background: var(--primary-dark); }
+
+.hero-stats { display: flex; gap: 1.5rem; margin-top: 1.2rem; }
+.hero-stat { text-align: center; }
+.hero-stat strong { display: block; font-family: 'Syne', sans-serif; font-size: 1.4rem; color: var(--accent); }
+.hero-stat span { font-size: 0.78rem; color: rgba(255,255,255,0.55); }
+
+/* KATEGORI */
+.kategori-scroll { display: flex; gap: 0.6rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+.kategori-scroll::-webkit-scrollbar { height: 3px; }
+.kategori-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.kat-chip {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    border: 2px solid var(--border);
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--text-muted); cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    background: white;
+    transition: all 0.2s;
+}
+.kat-chip:hover, .kat-chip.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+/* BARANG CARD */
+.barang-card {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.25s;
+    display: flex;
+    flex-direction: column;
+}
+.barang-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
+.barang-img {
+    width: 100%;
+    height: 168px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: 2.5rem;
+}
+.barang-img img { width: 100%; height: 168px; object-fit: cover; }
+.barang-info { padding: 0.9rem 1rem; flex: 1; display: flex; flex-direction: column; }
+.barang-nama { font-weight: 700; font-size: 0.92rem; color: var(--text); margin-bottom: 0.2rem; line-height: 1.3; }
+.barang-lokasi { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem; }
+.barang-harga { font-weight: 800; color: var(--primary); font-size: 1rem; margin-bottom: 0.4rem; }
+.barang-harga span { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); }
+.barang-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+.barang-rating { font-size: 0.78rem; color: var(--text-muted); }
+
+.section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--secondary);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+}
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    margin-left: 0.5rem;
+}
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-state i { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.35; display: block; }
+.empty-state p { font-size: 0.9rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <h1>Pinjemin <span>Apa Aja</span>,<br>Kapan Aja 🚀</h1>
+            <p>Platform peminjaman barang terpercaya antar sesama pengguna.</p>
+            <form action="{{ url_for('home') }}" method="get">
+                <div class="search-bar">
+                    <input type="text" name="search" placeholder="Cari barang yang ingin kamu pinjam..." value="{{ search }}">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
+            <div class="hero-stats">
+                <div class="hero-stat"><strong>500+</strong><span>Barang</span></div>
+                <div class="hero-stat"><strong>1.2K+</strong><span>Pengguna</span></div>
+                <div class="hero-stat"><strong>4.8★</strong><span>Rating</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="padding-bottom:2rem">
+    <!-- KATEGORI -->
+    <div class="kategori-scroll">
+        <a href="{{ url_for('home') }}" class="kat-chip {% if not kategori %}active{% endif %}"><i class="fas fa-border-all"></i> Semua</a>
+        <a href="{{ url_for('home', kategori='Elektronik') }}" class="kat-chip {% if kategori=='Elektronik' %}active{% endif %}"><i class="fas fa-laptop"></i> Elektronik</a>
+        <a href="{{ url_for('home', kategori='Olahraga & Outdoor') }}" class="kat-chip {% if kategori=='Olahraga & Outdoor' %}active{% endif %}"><i class="fas fa-futbol"></i> Olahraga & Outdoor</a>
+        <a href="{{ url_for('home', kategori='Alat Rumah') }}" class="kat-chip {% if kategori=='Alat Rumah' %}active{% endif %}"><i class="fas fa-home"></i> Alat Rumah</a>
+        <a href="{{ url_for('home', kategori='Kendaraan') }}" class="kat-chip {% if kategori=='Kendaraan' %}active{% endif %}"><i class="fas fa-car"></i> Kendaraan</a>
+        <a href="{{ url_for('home', kategori='Pakaian') }}" class="kat-chip {% if kategori=='Pakaian' %}active{% endif %}"><i class="fas fa-tshirt"></i> Pakaian</a>
+        <a href="{{ url_for('home', kategori='Buku') }}" class="kat-chip {% if kategori=='Buku' %}active{% endif %}"><i class="fas fa-book"></i> Buku</a>
+        <a href="{{ url_for('home', kategori='Lainnya') }}" class="kat-chip {% if kategori=='Lainnya' %}active{% endif %}"><i class="fas fa-ellipsis-h"></i> Lainnya</a>
+    </div>
+
+    <!-- BARANG -->
+    <div class="section-title">
+        <i class="fas fa-fire" style="color:var(--primary)"></i>
+        {% if search %}Hasil pencarian "{{ search }}"
+        {% elif kategori %}Kategori: {{ kategori }}
+        {% else %}Barang Terfavorit{% endif %}
+    </div>
+
+    {% if barang %}
+    <div class="grid grid-4">
+        {% for b in barang %}
+        <div class="barang-card">
+            <div class="barang-img">
+                {% if b.foto %}
+                <img src="{{ url_for('static', filename='images/uploads/' + b.foto) }}" alt="{{ b.nama_barang }}">
+                {% else %}
+                <i class="fas fa-box-open"></i>
+                {% endif %}
+            </div>
+            <div class="barang-info">
+                <div class="barang-nama">{{ b.nama_barang }}</div>
+                <div class="barang-lokasi"><i class="fas fa-map-marker-alt" style="color:var(--primary)"></i>{{ b.lokasi or 'Lokasi tidak diketahui' }}</div>
+                <div class="barang-harga">Rp {{ "{:,.0f}".format(b.harga_sewa) }}<span>/hari</span></div>
+                <div class="barang-footer">
+                    <div class="barang-rating">
+                        <span style="color:var(--accent)">★</span>
+                        {{ "%.1f"|format(b.rating) if b.rating else "Baru" }}
+                        <span style="color:var(--border)">|</span>
+                        <span style="color:{% if b.total_disewa >= 10 %}#f97316{% else %}var(--text-muted){% endif %}">
+                            <i class="fas fa-fire" style="font-size:0.7rem"></i> {{ b.total_disewa or 0 }}x
+                        </span>
+                    </div>
+                    <a href="{{ url_for('detail_barang', id=b.id) }}" class="btn btn-primary btn-sm">Detail</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <p>Barang tidak ditemukan. Coba kata kunci lain!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

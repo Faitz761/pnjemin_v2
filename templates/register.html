@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Daftar - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.auth-wrap { min-height: calc(100vh - 180px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.auth-card { background: white; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); width: 100%; max-width: 480px; overflow: hidden; }
+.auth-header { background: linear-gradient(135deg, var(--secondary), #16213e); padding: 1.8rem; text-align: center; }
+.auth-header h2 { font-family: 'Syne', sans-serif; color: white; font-size: 1.4rem; margin-bottom: 0.3rem; }
+.auth-header p { color: rgba(255,255,255,0.55); font-size: 0.85rem; }
+.auth-logo { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; color: var(--primary); margin-bottom: 0.8rem; }
+.auth-body { padding: 1.8rem; }
+.auth-footer { text-align: center; font-size: 0.85rem; color: var(--text-muted); padding-bottom: 1.5rem; }
+.auth-footer a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.tipe-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
+.tipe-option { position: relative; }
+.tipe-option input[type=radio] { position: absolute; opacity: 0; }
+.tipe-label {
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    padding: 0.9rem; border: 2px solid var(--border); border-radius: var(--radius-sm);
+    cursor: pointer; text-align: center; transition: all 0.2s; font-size: 0.85rem; font-weight: 600;
+}
+.tipe-label i { font-size: 1.5rem; color: var(--text-muted); }
+.tipe-option input:checked + .tipe-label { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.tipe-option input:checked + .tipe-label i { color: var(--primary); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">P-Njemin</div>
+            <h2>Buat Akun Baru</h2>
+            <p>Bergabung dan mulai pinjemin barang</p>
+        </div>
+        <div class="auth-body">
+            <form method="post">
+                <div class="form-group">
+                    <label>Saya ingin bergabung sebagai:</label>
+                    <div class="tipe-selector">
+                        <div class="tipe-option">
+                            <input type="radio" name="tipe_akun" id="tipe_peminjam" value="peminjam" checked>
+                            <label class="tipe-label" for="tipe_peminjam">
+                                <i class="fas fa-hand-holding"></i>
+                                Peminjam
+                                <small style="font-weight:400;color:var(--text-muted)">Cari & pinjam barang</small>
+                            </label>
+                        </div>
+                        <div class="tipe-option">
+                            <input type="radio" name="tipe_akun" id="tipe_pemilik" value="pemilik">
+                            <label class="tipe-label" for="tipe_pemilik">
+                                <i class="fas fa-store"></i>
+                                Pemilik Barang
+                                <small style="font-weight:400;color:var(--text-muted)">Sewakan barangmu</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Nama Lengkap</label>
+                    <input type="text" name="nama" class="form-control" placeholder="Nama lengkap kamu" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="email@kamu.com" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Nomor HP</label>
+                    <input type="text" name="no_hp" class="form-control" placeholder="08xxxxxxxxxx" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Alamat</label>
+                    <input type="text" name="alamat" class="form-control" placeholder="Kota / Kabupaten kamu" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Min. 6 karakter" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem">
+                    <i class="fas fa-user-plus"></i> Daftar Sekarang
+                </button>
+            </form>
+        </div>
+        <div class="auth-footer">
+            Sudah punya akun? <a href="{{ url_for('login') }}">Masuk di sini</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

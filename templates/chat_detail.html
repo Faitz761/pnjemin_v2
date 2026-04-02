@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Chat dengan {{ partner.nama }} - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.chat-wrap { max-width: 700px; margin: 0 auto; padding: 1rem 1.5rem 1.5rem; }
+.chat-header {
+    display: flex; align-items: center; gap: 0.9rem;
+    padding: 1rem 1.2rem; background: white;
+    border: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: 2px solid var(--primary);
+}
+.chat-partner-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.chat-partner-info .name { font-weight: 700; font-size: 0.95rem; }
+.chat-partner-info .sub { font-size: 0.78rem; color: var(--text-muted); }
+.chat-barang-banner {
+    background: var(--primary-light); border-left: 3px solid var(--primary);
+    padding: 0.6rem 1.2rem; font-size: 0.82rem; color: var(--primary);
+    font-weight: 600; display: flex; align-items: center; gap: 0.5rem;
+}
+.messages-box {
+    background: #f7f8fc; border: 1px solid var(--border); border-top: none;
+    min-height: 380px; max-height: 450px; overflow-y: auto;
+    padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem;
+}
+.msg-bubble { display: flex; flex-direction: column; max-width: 72%; }
+.msg-bubble.sent { align-self: flex-end; align-items: flex-end; }
+.msg-bubble.recv { align-self: flex-start; align-items: flex-start; }
+.bubble {
+    padding: 0.6rem 0.9rem; border-radius: 14px;
+    font-size: 0.88rem; line-height: 1.5; word-break: break-word;
+}
+.sent .bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+.recv .bubble { background: white; color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg-time { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem; padding: 0 0.2rem; }
+.chat-input-area {
+    background: white; border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 0.8rem 1rem; display: flex; gap: 0.6rem; align-items: center;
+}
+.chat-input-area input {
+    flex: 1; border: 2px solid var(--border); border-radius: 20px;
+    padding: 0.55rem 1rem; font-family: inherit; font-size: 0.88rem;
+    outline: none; transition: border 0.2s;
+}
+.chat-input-area input:focus { border-color: var(--primary); }
+.send-btn {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--primary);
+    color: white; border: none; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 0.9rem;
+    transition: background 0.2s; flex-shrink: 0;
+}
+.send-btn:hover { background: var(--primary-dark); }
+.date-divider { text-align: center; font-size: 0.72rem; color: var(--text-muted); margin: 0.4rem 0; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="chat-wrap">
+    <a href="{{ url_for('chat_list') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:0.8rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="chat-header">
+        <div class="chat-partner-avatar">{{ partner.nama[0].upper() }}</div>
+        <div class="chat-partner-info">
+            <div class="name">{{ partner.nama }}</div>
+            <div class="sub">{{ 'Pemilik Barang' if partner.tipe_akun == 'pemilik' else 'Peminjam' }}</div>
+        </div>
+        {% if barang %}
+        <a href="{{ url_for('detail_barang', id=barang.id) }}" class="btn btn-outline btn-sm" style="margin-left:auto">
+            <i class="fas fa-box"></i> Lihat Barang
+        </a>
+        {% endif %}
+    </div>
+
+    {% if barang %}
+    <div class="chat-barang-banner">
+        <i class="fas fa-tag"></i> Tentang: {{ barang.nama_barang }} &mdash;
+        <span style="color:var(--secondary)">Rp {{ "{:,.0f}".format(barang.harga_sewa) }}/hari</span>
+    </div>
+    {% endif %}
+
+    <div class="messages-box" id="messagesBox">
+        {% if not messages %}
+        <div style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin:auto">
+            <i class="fas fa-comment" style="font-size:1.5rem;opacity:0.25;display:block;margin-bottom:0.5rem"></i>
+            Mulai percakapan dengan {{ partner.nama }}
+        </div>
+        {% endif %}
+        {% set prev_date = namespace(val='') %}
+        {% for m in messages %}
+            {% set cur_date = m.created_at[:10] %}
+            {% if cur_date != prev_date.val %}
+            <div class="date-divider">── {{ cur_date }} ──</div>
+            {% set prev_date.val = cur_date %}
+            {% endif %}
+            <div class="msg-bubble {{ 'sent' if m.id_pengirim == session.user_id else 'recv' }}">
+                {% if m.konteks_barang %}
+                <div style="font-size:0.65rem;color:{% if m.id_pengirim == session.user_id %}rgba(255,255,255,0.7){% else %}var(--text-muted){% endif %};margin-bottom:0.2rem">
+                    <i class="fas fa-box" style="font-size:0.6rem"></i> {{ m.konteks_barang }}
+                </div>
+                {% endif %}
+                <div class="bubble">{{ m.pesan }}</div>
+                <div class="msg-time">{{ m.created_at[11:16] }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form method="post" class="chat-input-area" id="chatForm">
+        <input type="text" name="pesan" id="pesanInput" placeholder="Ketik pesan..." autocomplete="off" required>
+        <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Auto scroll ke bawah
+const box = document.getElementById('messagesBox');
+box.scrollTop = box.scrollHeight;
+
+// Focus input
+document.getElementById('pesanInput').focus();
+
+// Enter to send
+document.getElementById('pesanInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chatForm').submit();
+    }
+});
+</script>
+{% endblock %}

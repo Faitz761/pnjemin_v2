@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Edit Barang - P-Njemin{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:0 auto;padding:1.5rem">
+    <a href="{{ url_for('barang_saya') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali ke Barang Saya
+    </a>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-edit" style="color:var(--primary)"></i> Edit Barang</div>
+        <div class="card-body">
+            {% if barang.foto %}
+            <div style="margin-bottom:1.2rem;text-align:center">
+                <img src="{{ url_for('static', filename='images/uploads/' + barang.foto) }}"
+                     style="max-height:180px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border)">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Foto saat ini</div>
+            </div>
+            {% endif %}
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Nama Barang</label>
+                    <input type="text" name="nama_barang" class="form-control"
+                           value="{{ barang.nama_barang }}"
+                           placeholder="Contoh: Tenda Camping Coleman 4 Orang" required>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select name="kategori" class="form-control" required>
+                            {% for k in ['Elektronik','Olahraga & Outdoor','Peralatan Rumah','Kendaraan','Pakaian & Kostum','Alat Musik','Lainnya'] %}
+                            <option value="{{ k }}" {% if barang.kategori == k %}selected{% endif %}>{{ k }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Sewa / Hari (Rp)</label>
+                        <input type="number" name="harga_sewa" class="form-control"
+                               value="{{ barang.harga_sewa|int }}"
+                               placeholder="Contoh: 75000" min="1000" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <textarea name="deskripsi" class="form-control" rows="3"
+                              placeholder="Contoh: Tenda waterproof kapasitas 4 orang. Sudah termasuk pasak, tali, dan tas penyimpanan. Kondisi bagus, jarang dipakai.">{{ barang.deskripsi or '' }}</textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="form-group">
+                        <label>Lokasi Pengambilan</label>
+                        <input type="text" name="lokasi" class="form-control"
+                               value="{{ barang.lokasi or '' }}"
+                               placeholder="Contoh: Jakarta Selatan, Mampang">
+                    </div>
+                    <div class="form-group">
+                        <label>Stok Tersedia</label>
+                        <input type="number" name="stok" class="form-control"
+                               value="{{ barang.stok }}" min="0" max="99" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ganti Foto (opsional)</label>
+                    <input type="file" name="foto" class="form-control" accept="image/*">
+                    <small style="color:var(--text-muted);font-size:0.78rem">Kosongkan jika tidak ingin mengganti foto</small>
+                </div>
+                <div style="display:flex;gap:0.8rem;margin-top:0.5rem">
+                    <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
+                        <i class="fas fa-save"></i> Simpan Perubahan
+                    </button>
+                    <a href="{{ url_for('barang_saya') }}" class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-muted)">
+                        Batal
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

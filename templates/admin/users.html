@@ -1,0 +1,46 @@
+{% extends 'admin/base.html' %}
+{% block title %}Manajemen Pengguna - P-Njemin{% endblock %}
+{% block content %}
+<div class="topbar">
+    <h1><i class="fas fa-users" style="color:var(--primary)"></i> Manajemen Pengguna</h1>
+</div>
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr><th>ID</th><th>Nama</th><th>Email</th><th>No HP</th><th>Tipe</th><th>Rating Peminjam</th><th>Status</th><th>Bergabung</th><th>Aksi</th></tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td><strong>#{{ u.id }}</strong></td>
+                <td>{{ u.nama }}</td>
+                <td style="font-size:0.8rem">{{ u.email }}</td>
+                <td style="font-size:0.8rem">{{ u.no_hp or '—' }}</td>
+                <td><span class="badge {% if u.tipe_akun == 'pemilik' %}badge-success{% else %}badge-info{% endif %}">{{ u.tipe_akun }}</span></td>
+                <td style="text-align:center">
+                    {% if ratings.get(u.id) %}
+                    <span style="color:#f59e0b;font-weight:700">⭐ {{ ratings[u.id]['avg'] }}</span>
+                    <div style="font-size:0.72rem;color:var(--text-muted)">{{ ratings[u.id]['cnt'] }}x ulasan</div>
+                    {% else %}
+                    <span style="color:var(--text-muted);font-size:0.8rem">—</span>
+                    {% endif %}
+                </td>
+                <td><span class="badge {% if u.status == 'aktif' %}badge-success{% else %}badge-danger{% endif %}">{{ u.status }}</span></td>
+                <td style="font-size:0.8rem">{{ u.created_at[:10] }}</td>
+                <td>
+                    <div style="display:flex;gap:0.4rem">
+                        <a href="{{ url_for('admin_blokir', id=u.id) }}" class="btn btn-sm {% if u.status == 'aktif' %}btn-warning{% else %}btn-success{% endif %}">
+                            <i class="fas fa-{% if u.status == 'aktif' %}ban{% else %}unlock{% endif %}"></i>
+                            {{ 'Blokir' if u.status == 'aktif' else 'Aktifkan' }}
+                        </a>
+                        <a href="{{ url_for('admin_hapus_user', id=u.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus user ini?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

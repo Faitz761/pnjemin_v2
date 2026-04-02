@@ -1,0 +1,42 @@
+{% extends 'admin/base.html' %}
+{% block title %}Ajuan Banding - P-Njemin{% endblock %}
+{% block content %}
+<div class="topbar">
+    <h1><i class="fas fa-gavel" style="color:var(--primary)"></i> Ajuan Banding</h1>
+</div>
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr><th>ID</th><th>User</th><th>Email</th><th>Status Akun</th><th>Alasan</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr>
+        </thead>
+        <tbody>
+            {% for b in banding %}
+            <tr>
+                <td><strong>#{{ b.id }}</strong></td>
+                <td>{{ b.nama }}</td>
+                <td style="font-size:0.8rem">{{ b.email }}</td>
+                <td><span class="badge {% if b.status_akun == 'aktif' %}badge-success{% else %}badge-danger{% endif %}">{{ b.status_akun }}</span></td>
+                <td style="max-width:220px;font-size:0.82rem">{{ b.alasan }}</td>
+                <td>
+                    {% if b.status == 'menunggu' %}<span class="badge badge-warning">Menunggu</span>
+                    {% elif b.status == 'diterima' %}<span class="badge badge-success">Diterima</span>
+                    {% else %}<span class="badge badge-danger">Ditolak</span>{% endif %}
+                </td>
+                <td style="font-size:0.8rem">{{ b.created_at[:10] }}</td>
+                <td>
+                    {% if b.status == 'menunggu' %}
+                    <div style="display:flex;gap:0.4rem">
+                        <a href="{{ url_for('admin_proses_banding', id=b.id, aksi='terima') }}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Terima</a>
+                        <a href="{{ url_for('admin_proses_banding', id=b.id, aksi='tolak') }}" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Tolak</a>
+                    </div>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not banding %}
+            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:2rem">Belum ada ajuan banding.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

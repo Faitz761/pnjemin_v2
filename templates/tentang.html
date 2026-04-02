@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}Tentang Kami - P🤝Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.tentang-hero {
+    background: linear-gradient(135deg, var(--secondary) 0%, #2d1b69 100%);
+    color: white;
+    padding: 4rem 2rem;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.tentang-hero h1 { font-family:'Syne',sans-serif; font-size:2.2rem; margin-bottom:0.8rem; }
+.tentang-hero h1 span { color: var(--primary); }
+.tentang-hero p { color: rgba(255,255,255,0.7); font-size:1rem; max-width:600px; margin:0 auto; line-height:1.7; }
+.section-title { font-family:'Syne',sans-serif; font-size:1.4rem; color:var(--secondary); margin-bottom:0.5rem; }
+.section-subtitle { color:var(--text-muted); font-size:0.9rem; margin-bottom:2rem; }
+.visi-card {
+    background: linear-gradient(135deg, var(--primary) 0%, #ff9a6c 100%);
+    color: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+.visi-card h3 { font-family:'Syne',sans-serif; font-size:1.1rem; margin-bottom:0.6rem; opacity:0.85; }
+.visi-card p { font-size:0.95rem; line-height:1.7; }
+.misi-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: white;
+    margin-bottom: 0.7rem;
+    transition: box-shadow 0.2s;
+}
+.misi-item:hover { box-shadow: var(--shadow-hover); }
+.misi-icon {
+    width: 36px; height: 36px;
+    background: var(--primary-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--primary);
+    font-size: 0.9rem;
+}
+.misi-item p { font-size:0.88rem; color:var(--text); line-height:1.6; margin:0; }
+.stat-wrap {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    margin: 2rem 0;
+}
+.stat-box {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+.stat-box .num { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--primary); }
+.stat-box .label { font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="tentang-hero">
+    <h1>Tentang <span>P🤝Njemin</span></h1>
+    <p>Platform berbasis web yang dirancang untuk memudahkan proses peminjaman dan penyewaan berbagai barang secara lebih praktis, terorganisir, dan dapat diakses dalam satu sistem digital.</p>
+</div>
+
+<div class="container" style="max-width:860px;padding-bottom:2rem">
+
+    <!-- Apa itu P-Njemin -->
+    <div class="card" style="margin-bottom:2rem">
+        <div class="card-body">
+            <div class="section-title"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Apa itu P-Njemin?</div>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:1.2rem">Tentang platform kami</p>
+            <p style="line-height:1.8;color:var(--text);font-size:0.95rem">
+                P-Njemin adalah platform berbasis web yang dirancang untuk memudahkan proses peminjaman dan penyewaan berbagai barang dan jasa secara lebih praktis, terorganisir, dan dapat diakses dalam satu sistem digital.
+            </p>
+            <p style="line-height:1.8;color:var(--text);font-size:0.95rem;margin-top:0.8rem">
+                P-Njemin menghubungkan pemilik barang dengan pengguna yang membutuhkan melalui sistem yang sederhana, sehingga aktivitas penyewaan menjadi lebih mudah, transparan, dan terdokumentasi.
+            </p>
+
+            <div class="stat-wrap">
+                <div class="stat-box">
+                    <div class="num">2+</div>
+                    <div class="label">Kategori Barang</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">3</div>
+                    <div class="label">Tipe Pengguna</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">100%</div>
+                    <div class="label">Digital & Terorganisir</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visi & Misi -->
+    <div id="visi" style="margin-bottom:2rem">
+        <div class="section-title"><i class="fas fa-bullseye" style="color:var(--primary)"></i> Visi & Misi</div>
+        <p class="section-subtitle">Tujuan besar yang kami kejar</p>
+
+        <div class="visi-card">
+            <h3><i class="fas fa-eye"></i> VISI</h3>
+            <p>Menjadi platform penyewaan barang berbasis digital yang mempermudah akses terhadap kebutuhan sementara secara praktis dan terjangkau.</p>
+        </div>
+
+        <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem 1.8rem">
+            <h3 style="font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:1rem;color:var(--secondary)"><i class="fas fa-rocket" style="color:var(--primary)"></i> MISI</h3>
+
+            <div class="misi-item">
+                <div class="misi-icon"><i class="fas fa-layer-group"></i></div>
+                <p>Menyediakan sistem peminjaman barang yang mudah digunakan dan terstruktur.</p>
+            </div>
+            <div class="misi-item">
+                <div class="misi-icon"><i class="fas fa-handshake"></i></div>
+                <p>Menghubungkan pemilik barang dengan pengguna secara efisien melalui platform digital.</p>
+            </div>
+            <div class="misi-item">
+                <div class="misi-icon"><i class="fas fa-star"></i></div>
+                <p>Meningkatkan kepercayaan pengguna melalui sistem akun, rating, dan riwayat transaksi.</p>
+            </div>
+            <div class="misi-item">
+                <div class="misi-icon"><i class="fas fa-recycle"></i></div>
+                <p>Mendukung pemanfaatan barang yang jarang digunakan agar memiliki nilai ekonomi.</p>
+            </div>
+            <div class="misi-item">
+                <div class="misi-icon"><i class="fas fa-chart-line"></i></div>
+                <p>Mengembangkan platform secara bertahap sesuai kebutuhan pengguna dan skala penggunaan.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="background:linear-gradient(135deg,var(--secondary),#2d1b69);border-radius:var(--radius);padding:2rem;text-align:center;color:white">
+        <div style="font-family:'Syne',sans-serif;font-size:1.2rem;margin-bottom:0.5rem">Siap mulai meminjam atau menyewakan?</div>
+        <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;margin-bottom:1.2rem">Daftar sekarang gratis dan mulai transaksi pertamamu</p>
+        <div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap">
+            <a href="{{ url_for('register') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Daftar Sekarang</a>
+            <a href="{{ url_for('bantuan') }}" class="btn" style="background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.3)"><i class="fas fa-question-circle"></i> Pusat Bantuan</a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

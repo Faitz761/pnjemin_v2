@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel - P-Njemin{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF6B35; --primary-dark: #e55a25; --primary-light: #fff3ee;
+            --secondary: #1a1a2e; --accent: #FFD700;
+            --text: #2d2d2d; --text-muted: #777; --bg: #f7f8fc;
+            --card-bg: #fff; --border: #eaeaea;
+            --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6;
+            --radius: 12px; --radius-sm: 8px;
+            --shadow: 0 2px 12px rgba(0,0,0,0.07);
+            --sidebar-w: 220px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+        .sidebar {
+            width: var(--sidebar-w); background: var(--secondary);
+            padding: 1.5rem 0; display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; height: 100vh; z-index: 50;
+        }
+        .sidebar-logo { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--primary); padding: 0 1.4rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .sidebar-logo span { color: white; }
+        .sidebar-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.3); padding: 1rem 1.4rem 0.5rem; }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 1.4rem; color: rgba(255,255,255,0.6);
+            text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            transition: all 0.2s; border-left: 3px solid transparent;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            color: white; background: rgba(255,255,255,0.07); border-left-color: var(--primary);
+        }
+        .sidebar-nav a i { width: 18px; text-align: center; font-size: 0.9rem; }
+        .sidebar-bottom { margin-top: auto; padding: 1rem 1.4rem; border-top: 1px solid rgba(255,255,255,0.08); }
+        .sidebar-bottom a { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.4); font-size: 0.82rem; text-decoration: none; }
+        .sidebar-bottom a:hover { color: white; }
+        .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 1.8rem; min-height: 100vh; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.8rem; }
+        .topbar h1 { font-family: 'Syne', sans-serif; font-size: 1.4rem; color: var(--secondary); }
+        .admin-badge { background: var(--primary-light); color: var(--primary); padding: 0.35rem 0.9rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+        .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; } .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.78rem; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .card { background: white; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
+        .card-header { padding: 0.9rem 1.3rem; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; }
+        .card-body { padding: 1.3rem; }
+        .stat-card { background: white; border-radius: var(--radius); padding: 1.2rem 1.3rem; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 1rem; }
+        .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .stat-info strong { display: block; font-family: 'Syne', sans-serif; font-size: 1.5rem; color: var(--secondary); }
+        .stat-info span { font-size: 0.8rem; color: var(--text-muted); }
+        .table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .table th { background: var(--bg); padding: 0.7rem 1rem; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); }
+        .table td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover td { background: var(--bg); }
+        .badge { display: inline-block; padding: 0.22rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-info { background: #dbeafe; color: #1d4ed8; }
+        .badge-secondary { background: #f1f5f9; color: #64748b; }
+        .alert { padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem; }
+        .alert-success { background: #dcfce7; color: #15803d; }
+        .form-control { width: 100%; padding: 0.6rem 0.9rem; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.88rem; outline: none; transition: border 0.2s; }
+        .form-control:focus { border-color: var(--primary); }
+        select.form-control { cursor: pointer; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<aside class="sidebar">
+    <div class="sidebar-logo">P🤝<span>Njemin</span><br><small style="font-size:0.65rem;color:rgba(255,255,255,0.35);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600">ADMIN PANEL</small></div>
+    <div class="sidebar-label">Menu</div>
+    <nav class="sidebar-nav">
+        <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint=='admin_dashboard' %}class="active"{% endif %}><i class="fas fa-chart-pie"></i> Dashboard</a>
+        <a href="{{ url_for('admin_users') }}" {% if request.endpoint=='admin_users' %}class="active"{% endif %}><i class="fas fa-users"></i> Pengguna</a>
+        <a href="{{ url_for('admin_barang') }}" {% if request.endpoint=='admin_barang' %}class="active"{% endif %}><i class="fas fa-boxes"></i> Barang</a>
+        <a href="{{ url_for('admin_laporan') }}" {% if request.endpoint=='admin_laporan' %}class="active"{% endif %}><i class="fas fa-flag"></i> Laporan</a>
+        <a href="{{ url_for('admin_banding') }}" {% if request.endpoint=='admin_banding' %}class="active"{% endif %}><i class="fas fa-gavel"></i> Banding</a>
+        <a href="{{ url_for('admin_profil') }}" {% if request.endpoint=='admin_profil' %}class="active"{% endif %}><i class="fas fa-user-shield"></i> Profil Admin</a>
+    </nav>
+    <div class="sidebar-bottom">
+        <a href="{{ url_for('home') }}" target="_blank"><i class="fas fa-external-link-alt"></i> Lihat Website</a>
+        <a href="{{ url_for('logout') }}" style="margin-top:0.5rem"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+<div class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }}"><i class="fas fa-check-circle"></i> {{ msg }}</div>
+    {% endfor %}{% endif %}{% endwith %}
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>

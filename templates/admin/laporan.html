@@ -1,0 +1,100 @@
+{% extends 'admin/base.html' %}
+{% block title %}Laporan Denda - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center; }
+.modal-overlay.active { display:flex; }
+.modal { background:white;border-radius:14px;padding:1.8rem;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+.modal h3 { font-family:'Syne',sans-serif;margin-bottom:1rem; }
+.form-group { margin-bottom:1rem; }
+.form-group label { display:block;font-size:0.83rem;font-weight:700;margin-bottom:0.4rem; }
+.radio-row { display:flex;flex-direction:column;gap:0.5rem;margin-top:0.3rem; }
+.radio-row label { display:flex;align-items:center;gap:0.5rem;font-weight:500;font-size:0.88rem;cursor:pointer;padding:0.5rem 0.7rem;border:1px solid var(--border);border-radius:6px; }
+.radio-row label:hover { background:var(--bg); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="topbar">
+    <h1><i class="fas fa-flag" style="color:var(--primary)"></i> Laporan Denda dari Pemilik</h1>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.2rem">Laporan kerusakan barang yang diajukan pemilik setelah transaksi selesai</p>
+</div>
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr><th>#</th><th>Pemilik</th><th>Barang</th><th>Jenis Masalah</th><th>Deskripsi</th><th>Foto</th><th>Status</th><th>Tgl</th><th>Aksi</th></tr>
+        </thead>
+        <tbody>
+            {% for l in laporan %}
+            <tr>
+                <td><strong>#{{ l.id }}</strong></td>
+                <td>{{ l.nama_pelapor }}</td>
+                <td style="font-weight:600">{{ l.nama_barang }}</td>
+                <td><span class="badge badge-warning" style="font-size:0.72rem">{{ l.jenis_masalah }}</span></td>
+                <td style="max-width:180px;font-size:0.8rem">{{ l.deskripsi[:80] }}{% if l.deskripsi|length > 80 %}...{% endif %}</td>
+                <td>
+                    {% if l.foto_bukti %}
+                    <a href="{{ url_for('static', filename='images/uploads/' + l.foto_bukti) }}" target="_blank" class="btn btn-sm btn-outline" style="font-size:0.75rem"><i class="fas fa-image"></i></a>
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if l.status == 'menunggu' %}<span class="badge badge-warning">Menunggu</span>
+                    {% elif l.status == 'selesai' %}<span class="badge badge-success">Selesai</span>
+                    {% else %}<span class="badge badge-secondary">{{ l.status }}</span>{% endif %}
+                </td>
+                <td style="font-size:0.78rem;white-space:nowrap">{{ l.created_at[:10] }}</td>
+                <td>
+                    {% if l.status == 'menunggu' %}
+                    <button class="btn btn-primary btn-sm" onclick="openModal({{ l.id }})"><i class="fas fa-gavel"></i> Putuskan</button>
+                    {% else %}
+                    <div style="font-size:0.75rem;color:var(--text-muted);max-width:120px">{{ l.keputusan or '—' }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not laporan %}
+            <tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted)">Belum ada laporan denda.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL KEPUTUSAN -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h3><i class="fas fa-gavel" style="color:var(--primary)"></i> Putuskan Laporan Denda</h3>
+        <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:1rem">Keputusan ini akan dikirim sebagai notifikasi ke pemilik dan peminjam.</p>
+        <form method="post" id="modalForm">
+            <div class="form-group">
+                <label>Keputusan Admin</label>
+                <div class="radio-row">
+                    <label><input type="radio" name="keputusan" value="Denda disetujui — Peminjam wajib membayar ganti rugi" required> ✅ Denda disetujui — Peminjam wajib membayar ganti rugi</label>
+                    <label><input type="radio" name="keputusan" value="Denda ditolak — Kerusakan dianggap wajar/normal"> ❌ Denda ditolak — Kerusakan wajar/normal</label>
+                    <label><input type="radio" name="keputusan" value="Denda sebagian — Perlu negosiasi lebih lanjut"> ⚖️ Denda sebagian — Perlu negosiasi</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Catatan Tambahan (opsional)</label>
+                <textarea name="catatan" class="form-control" rows="2" placeholder="Penjelasan singkat keputusan..."></textarea>
+            </div>
+            <div style="display:flex;gap:0.7rem">
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center"><i class="fas fa-gavel"></i> Kirim Keputusan</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function openModal(id) {
+    document.getElementById('modalForm').action = '/admin/selesaikan_laporan/' + id;
+    document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+}
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}
