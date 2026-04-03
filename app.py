@@ -147,7 +147,10 @@ def init_db():
         try:
             c.execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}")
         except: pass
-
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN nik TEXT")
+    except:
+        pass
     existing = c.execute("SELECT id FROM users WHERE email='admin@pnjemin.com'").fetchone()
     if not existing:
         c.execute("INSERT INTO users (nama,email,password,role,tipe_akun) VALUES (?,?,?,'admin','admin')",
