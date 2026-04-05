@@ -94,19 +94,28 @@ def add_notif(id_user, pesan):
 
 def notif_count():
     if 'user_id' not in session: return 0
-    row = db_execute("SELECT COUNT(*) FROM notifikasi WHERE id_user=? AND dibaca=0", (session['user_id'],), fetchone=True)
-    return row[0] if row else 0
+    row = db_execute("SELECT COUNT(*) AS c FROM notifikasi WHERE id_user=? AND dibaca=0", (session['user_id'],), fetchone=True)
+    return row['c'] if row else 0
 
 def chat_unread():
     if 'user_id' not in session: return 0
     try:
-        row = db_execute("SELECT COUNT(*) FROM chat WHERE id_penerima=? AND dibaca=0", (session['user_id'],), fetchone=True)
-        return row[0] if row else 0
+        row = db_execute("SELECT COUNT(*) AS c FROM chat WHERE id_penerima=? AND dibaca=0", (session['user_id'],), fetchone=True)
+        return row['c'] if row else 0
     except: return 0
+
+def foto_url(foto):
+    """Otomatis detect: kalau foto adalah URL lengkap (Cloudinary), pakai langsung.
+    Kalau nama file biasa, pakai path /static/images/uploads/."""
+    if not foto:
+        return None
+    if foto.startswith('http://') or foto.startswith('https://'):
+        return foto
+    return '/static/images/uploads/' + foto
 
 @app.context_processor
 def inject_globals():
-    return dict(chat_unread_count=chat_unread())
+    return dict(chat_unread_count=chat_unread(), foto_url=foto_url)
 
 def cek_blokir():
     if 'user_id' in session:
@@ -413,8 +422,8 @@ def detail_barang(id):
         flash('Barang tidak ditemukan.','error')
         return redirect(url_for('home'))
     reviews = db_execute("SELECT r.*,u.nama as nama_reviewer FROM review r JOIN users u ON r.id_reviewer=u.id JOIN transaksi t ON r.id_transaksi=t.id WHERE t.id_barang=? ORDER BY r.created_at DESC",(id,), fetchall=True)
-    row = db_execute("SELECT COUNT(*) FROM transaksi WHERE id_barang=? AND status NOT IN ('dibatalkan')",(id,), fetchone=True)
-    total_disewa = row[0] if row else 0
+    row = db_execute("SELECT COUNT(*) AS c FROM transaksi WHERE id_barang=? AND status NOT IN ('dibatalkan')",(id,), fetchone=True)
+    total_disewa = row['c'] if row else 0
     db_execute("UPDATE barang SET total_disewa=? WHERE id=?",(total_disewa,id), commit=True)
     is_pemilik_sendiri = False
     if 'user_id' in session:
@@ -513,8 +522,8 @@ def review(id_transaksi):
     if request.method == 'POST':
         rating,komentar = int(request.form['rating']),request.form['komentar']
         db_execute("INSERT INTO review (id_transaksi,id_reviewer,rating,komentar) VALUES (?,?,?,?)",(id_transaksi,session['user_id'],rating,komentar), commit=True)
-        avg_row = db_execute("SELECT AVG(r.rating) FROM review r JOIN transaksi t ON r.id_transaksi=t.id WHERE t.id_barang=?",(transaksi['id_barang'],), fetchone=True)
-        avg = avg_row[0] if avg_row else 0
+        avg_row = db_execute("SELECT AVG(r.rating) AS c FROM review r JOIN transaksi t ON r.id_transaksi=t.id WHERE t.id_barang=?",(transaksi['id_barang'],), fetchone=True)
+        avg = avg_row['c'] if avg_row else 0
         db_execute("UPDATE barang SET rating=? WHERE id=?",(avg,transaksi['id_barang']), commit=True)
         flash('Review berhasil dikirim!','success')
         return redirect(url_for('riwayat'))
@@ -737,8 +746,8 @@ def review_peminjam(id_transaksi):
         komentar = request.form['komentar']
         db_execute("INSERT INTO review_peminjam (id_transaksi,id_pemilik,id_peminjam,rating,komentar) VALUES (?,?,?,?,?)",
                    (id_transaksi, session['user_id'], t['id_user'], rating, komentar), commit=True)
-        avg_row = db_execute("SELECT AVG(rating) FROM review_peminjam WHERE id_peminjam=?",(t['id_user'],), fetchone=True)
-        avg = avg_row[0] if avg_row else 0
+        avg_row = db_execute("SELECT AVG(rating) AS c FROM review_peminjam WHERE id_peminjam=?",(t['id_user'],), fetchone=True)
+        avg = avg_row['c'] if avg_row else 0
         db_execute("UPDATE users SET rating=? WHERE id=?",(avg, t['id_user']), commit=True)
         add_notif(t['id_user'],f"Pemilik memberi ulasan untukmu sebagai peminjam '{t['nama_barang']}'.")
         flash('Ulasan peminjam berhasil dikirim!','success')
@@ -763,11 +772,11 @@ def admin_login():
 @app.route('/admin')
 def admin_dashboard():
     if session.get('role') != 'admin': return redirect(url_for('admin_login'))
-    total_user = db_execute("SELECT COUNT(*) FROM users WHERE role='user'", fetchone=True)[0]
-    total_barang = db_execute("SELECT COUNT(*) FROM barang", fetchone=True)[0]
-    total_transaksi = db_execute("SELECT COUNT(*) FROM transaksi", fetchone=True)[0]
-    total_laporan = db_execute("SELECT COUNT(*) FROM laporan WHERE status='menunggu'", fetchone=True)[0]
-    total_banding = db_execute("SELECT COUNT(*) FROM banding WHERE status='menunggu'", fetchone=True)[0]
+    total_user = db_execute("SELECT COUNT(*) AS c FROM users WHERE role='user'", fetchone=True)['c']
+    total_barang = db_execute("SELECT COUNT(*) AS c FROM barang", fetchone=True)["c"]
+    total_transaksi = db_execute("SELECT COUNT(*) AS c FROM transaksi", fetchone=True)["c"]
+    total_laporan = db_execute("SELECT COUNT(*) AS c FROM laporan WHERE status='menunggu'", fetchone=True)['c']
+    total_banding = db_execute("SELECT COUNT(*) AS c FROM banding WHERE status='menunggu'", fetchone=True)['c']
     bayar_pending = db_execute("""
         SELECT t.*,b.nama_barang,u.nama as nama_user FROM transaksi t
         JOIN barang b ON t.id_barang=b.id JOIN users u ON t.id_user=u.id
