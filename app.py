@@ -34,6 +34,23 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(f):
     return '.' in f and f.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ── Jinja2 filters: handle datetime object (PostgreSQL) vs string (SQLite) ──
+@app.template_filter('tgl')
+def filter_tgl(value, fmt='%Y-%m-%d'):
+    if not value:
+        return ''
+    if hasattr(value, 'strftime'):
+        return value.strftime(fmt)
+    return str(value)[:10]
+
+@app.template_filter('tglwaktu')
+def filter_tglwaktu(value):
+    if not value:
+        return ''
+    if hasattr(value, 'strftime'):
+        return value.strftime('%Y-%m-%d %H:%M')
+    return str(value)[:16]
+
 # ══════════════════════════════════════════════════
 #  DATABASE HELPERS (support PostgreSQL + SQLite)
 # ══════════════════════════════════════════════════

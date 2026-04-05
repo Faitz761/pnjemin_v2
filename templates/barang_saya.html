@@ -87,7 +87,7 @@
                 <div>
                     <div style="font-weight:700;font-size:0.88rem">{{ t.nama_barang }}</div>
                     <div style="font-size:0.78rem;color:var(--text-muted)">
-                        Peminjam: <strong>{{ t.nama_peminjam }}</strong> &middot; {{ t.no_hp or '—' }} &middot; {{ t.created_at[:10] }}
+                        Peminjam: <strong>{{ t.nama_peminjam }}</strong> &middot; {{ t.no_hp or '—' }} &middot; {{ t.created_at | tgl }}
                     </div>
                     <div style="margin-top:0.3rem">
                         {% if t.status == 'sedang_dipinjam' %}
@@ -126,7 +126,7 @@
             <div class="aktif-row">
                 <div>
                     <div style="font-weight:700;font-size:0.88rem">{{ t.nama_barang }}</div>
-                    <div style="font-size:0.78rem;color:var(--text-muted)">Peminjam: {{ t.nama_peminjam }} &middot; {{ t.created_at[:10] }}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted)">Peminjam: {{ t.nama_peminjam }} &middot; {{ t.created_at | tgl }}</div>
                     {% if t.foto_serah or t.foto_terima %}
                     <div style="display:flex;gap:0.6rem;margin-top:0.4rem">
                         {% if t.foto_serah %}

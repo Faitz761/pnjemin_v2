@@ -175,7 +175,7 @@
                                 </div>
                                 <div>
                                     <div class="reviewer-name">{{ r.nama_reviewer }}</div>
-                                    <div style="font-size:0.7rem;color:var(--text-muted)">{{ r.created_at[:10] }}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-muted)">{{ r.created_at | tgl }}</div>
                                 </div>
                             </div>
                             <div class="review-stars">

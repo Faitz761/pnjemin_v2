@@ -29,7 +29,7 @@
     {% for t in transaksi %}
     <div class="trx-card">
         <div class="trx-header">
-            <div class="trx-id">#TRX{{ '%04d'|format(t.id) }} &middot; {{ t.created_at[:10] }}</div>
+            <div class="trx-id">#TRX{{ '%04d'|format(t.id) }} &middot; {{ t.created_at | tgl }}</div>
             {% set s = t.status %}
             {% if s == 'menunggu_persetujuan' %}<span class="badge badge-warning"><i class="fas fa-clock"></i> Menunggu Persetujuan</span>
             {% elif s == 'menunggu_pembayaran' %}<span class="badge badge-warning"><i class="fas fa-wallet"></i> Menunggu Pembayaran</span>

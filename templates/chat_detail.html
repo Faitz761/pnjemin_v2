@@ -92,7 +92,7 @@
         {% endif %}
         {% set prev_date = namespace(val='') %}
         {% for m in messages %}
-            {% set cur_date = m.created_at[:10] %}
+            {% set cur_date = m.created_at | tgl %}
             {% if cur_date != prev_date.val %}
             <div class="date-divider">── {{ cur_date }} ──</div>
             {% set prev_date.val = cur_date %}
