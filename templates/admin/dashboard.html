@@ -42,7 +42,7 @@
             <span style="color:var(--text-muted);font-size:0.8rem"> — {{ t.nama_barang }}</span>
             <span style="color:var(--primary);font-weight:700;font-size:0.85rem;margin-left:0.5rem">Rp {{ "{:,.0f}".format(t.total_biaya) }}</span>
             {% if t.bukti_pembayaran %}
-            <a href="{{ url_for('static', filename='images/uploads/' + t.bukti_pembayaran) }}" target="_blank" style="font-size:0.72rem;color:var(--primary);margin-left:0.4rem"><i class="fas fa-image"></i> Lihat Bukti</a>
+            <a href="{{ t.bukti_pembayaran | foto_src }}" target="_blank" style="font-size:0.72rem;color:var(--primary);margin-left:0.4rem"><i class="fas fa-image"></i> Lihat Bukti</a>
             {% endif %}
         </div>
         <a href="{{ url_for('admin_verifikasi_pembayaran', id=t.id) }}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Verifikasi</a>

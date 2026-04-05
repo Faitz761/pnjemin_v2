@@ -51,6 +51,15 @@ def filter_tglwaktu(value):
         return value.strftime('%Y-%m-%d %H:%M')
     return str(value)[:16]
 
+@app.template_filter('foto_src')
+def filter_foto_src(value):
+    """Handle foto: kalau URL lengkap (Cloudinary) pakai langsung, kalau filename pakai static."""
+    if not value:
+        return ''
+    if value.startswith('http://') or value.startswith('https://'):
+        return value
+    return '/static/images/uploads/' + value
+
 # ══════════════════════════════════════════════════
 #  DATABASE HELPERS (support PostgreSQL + SQLite)
 # ══════════════════════════════════════════════════

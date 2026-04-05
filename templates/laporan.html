@@ -33,7 +33,7 @@
                 <td style="max-width:180px;font-size:0.8rem">{{ l.deskripsi[:80] }}{% if l.deskripsi|length > 80 %}...{% endif %}</td>
                 <td>
                     {% if l.foto_bukti %}
-                    <a href="{{ url_for('static', filename='images/uploads/' + l.foto_bukti) }}" target="_blank" class="btn btn-sm btn-outline" style="font-size:0.75rem"><i class="fas fa-image"></i></a>
+                    <a href="{{ l.foto_bukti | foto_src }}" target="_blank" class="btn btn-sm btn-outline" style="font-size:0.75rem"><i class="fas fa-image"></i></a>
                     {% else %}—{% endif %}
                 </td>
                 <td>

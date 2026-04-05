@@ -170,7 +170,7 @@
         <div class="barang-card">
             <div class="barang-img">
                 {% if b.foto %}
-                <img src="{{ url_for('static', filename='images/uploads/' + b.foto) }}" alt="{{ b.nama_barang }}">
+                <img src="{{ b.foto | foto_src }}" alt="{{ b.nama_barang }}">
                 {% else %}
                 <i class="fas fa-box-open"></i>
                 {% endif %}

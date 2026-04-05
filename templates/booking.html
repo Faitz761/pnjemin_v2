@@ -37,7 +37,7 @@
             <div class="barang-preview">
                 <div class="barang-preview-img">
                     {% if barang.foto %}
-                    <img src="{{ url_for('static', filename='images/uploads/' + barang.foto) }}" alt="{{ barang.nama_barang }}">
+                    <img src="{{ barang.foto | foto_src }}" alt="{{ barang.nama_barang }}">
                     {% else %}<i class="fas fa-box"></i>{% endif %}
                 </div>
                 <div class="barang-preview-info">

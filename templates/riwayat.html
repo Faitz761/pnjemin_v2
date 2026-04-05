@@ -42,7 +42,7 @@
         </div>
         <div class="trx-body">
             <div class="trx-img">
-                {% if t.foto %}<img src="{{ url_for('static', filename='images/uploads/' + t.foto) }}" alt="">
+                {% if t.foto %}<img src="{{ t.foto | foto_src }}" alt="">
                 {% else %}<i class="fas fa-box"></i>{% endif %}
             </div>
             <div class="trx-info">

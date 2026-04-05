@@ -64,7 +64,7 @@
                     <div style="font-size:0.78rem;color:var(--text-muted)">Dari: {{ l.nama_peminjam }} &middot; {{ l.jenis_masalah }}</div>
                     <div style="font-size:0.82rem;margin-top:0.2rem;color:var(--text)">{{ l.deskripsi }}</div>
                     {% if l.foto_bukti %}
-                    <a href="{{ url_for('static', filename='images/uploads/' + l.foto_bukti) }}" target="_blank" style="font-size:0.75rem;color:var(--primary)"><i class="fas fa-image"></i> Lihat Foto Bukti</a>
+                    <a href="{{ l.foto_bukti | foto_src }}" target="_blank" style="font-size:0.75rem;color:var(--primary)"><i class="fas fa-image"></i> Lihat Foto Bukti</a>
                     {% endif %}
                 </div>
                 <form method="post" action="{{ url_for('respon_laporan', id_laporan=l.id) }}" style="display:flex;gap:0.4rem;align-items:flex-end;flex-direction:column;min-width:200px">
@@ -130,10 +130,10 @@
                     {% if t.foto_serah or t.foto_terima %}
                     <div style="display:flex;gap:0.6rem;margin-top:0.4rem">
                         {% if t.foto_serah %}
-                        <a href="{{ url_for('static', filename='images/uploads/' + t.foto_serah) }}" target="_blank" style="font-size:0.72rem;color:green"><i class="fas fa-image"></i> Foto Awal</a>
+                        <a href="{{ t.foto_serah | foto_src }}" target="_blank" style="font-size:0.72rem;color:green"><i class="fas fa-image"></i> Foto Awal</a>
                         {% endif %}
                         {% if t.foto_terima %}
-                        <a href="{{ url_for('static', filename='images/uploads/' + t.foto_terima) }}" target="_blank" style="font-size:0.72rem;color:var(--primary)"><i class="fas fa-image"></i> Foto Akhir</a>
+                        <a href="{{ t.foto_terima | foto_src }}" target="_blank" style="font-size:0.72rem;color:var(--primary)"><i class="fas fa-image"></i> Foto Akhir</a>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -168,7 +168,7 @@
         {% for b in barang %}
         <div class="barang-list-item">
             <div class="barang-list-thumb">
-                {% if b.foto %}<img src="{{ url_for('static', filename='images/uploads/' + b.foto) }}" alt="">
+                {% if b.foto %}<img src="{{ b.foto | foto_src }}" alt="">
                 {% else %}<i class="fas fa-box"></i>{% endif %}
             </div>
             <div class="barang-list-info">

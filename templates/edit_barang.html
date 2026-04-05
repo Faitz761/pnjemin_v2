@@ -10,7 +10,7 @@
         <div class="card-body">
             {% if barang.foto %}
             <div style="margin-bottom:1.2rem;text-align:center">
-                <img src="{{ url_for('static', filename='images/uploads/' + barang.foto) }}"
+                <img src="{{ barang.foto | foto_src }}"
                      style="max-height:180px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border)">
                 <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Foto saat ini</div>
             </div>
