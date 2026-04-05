@@ -46,7 +46,7 @@
                 <div class="chat-preview">{{ c.last_pesan }}</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem">
-                <div class="chat-time">{{ c.last_time[11:16] if c.last_time else '' }}</div>
+                <div class="chat-time">{{ c.last_time | tglwaktu if c.last_time else '' }}</div>
                 {% if c.unread > 0 %}<div class="unread-dot"></div>{% endif %}
             </div>
         </a>

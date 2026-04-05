@@ -104,7 +104,7 @@
                 </div>
                 {% endif %}
                 <div class="bubble">{{ m.pesan }}</div>
-                <div class="msg-time">{{ m.created_at[11:16] }}</div>
+                <div class="msg-time">{{ m.created_at | tglwaktu }}</div>
             </div>
         {% endfor %}
     </div>
