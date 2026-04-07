@@ -2,6 +2,24 @@
 {% block title %}Daftar - P-Njemin{% endblock %}
 {% block extra_css %}
 <style>
+.alamat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+.alamat-grid select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+.alamat-grid select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 .auth-wrap { min-height: calc(100vh - 180px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
 .auth-card { background: white; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); width: 100%; max-width: 480px; overflow: hidden; }
 .auth-header { background: linear-gradient(135deg, var(--secondary), #16213e); padding: 1.8rem; text-align: center; }
@@ -72,9 +90,26 @@
     <input type="text" name="nik" class="form-control" placeholder="16 digit NIK" required maxlength="16">
 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-map-marker-alt"></i> Alamat</label>
-                    <input type="text" name="alamat" class="form-control" placeholder="Kota / Kabupaten kamu" required>
-                </div>
+    <label>Alamat</label>
+    <div class="alamat-grid">
+        <select id="provinsi" onchange="loadKabupaten()" required>
+            <option value="">— Pilih Provinsi —</option>
+        </select>
+        <select id="kabupaten" onchange="loadKecamatan()" disabled required>
+            <option value="">— Pilih Kabupaten —</option>
+        </select>
+        <select id="kecamatan" onchange="loadDesa()" disabled required>
+            <option value="">— Pilih Kecamatan —</option>
+        </select>
+        <select id="desa" disabled required>
+            <option value="">— Pilih Desa —</option>
+        </select>
+    </div>
+    <label style="font-size:0.85rem;color:var(--text-muted);margin-top:0.75rem;display:block">Detail alamat tambahan (opsional)</label>
+    <textarea name="alamat" id="alamat_detail" rows="2" placeholder="nomor rumah, RT/RW, patokan, atau paste alamat lengkap dari Google Maps di sini" style="width:100%;margin-top:0.15rem;padding:0.6rem 0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:0.95rem;resize:none"></textarea>
+    <!-- Field hidden untuk kirim alamat lengkap -->
+    <input type="hidden" name="alamat" id="alamat_lengkap">
+</div>
                 <div class="form-group">
                     <label><i class="fas fa-lock"></i> Password</label>
 <div style="position: relative;">
@@ -93,6 +128,83 @@
     </div>
 </div>
 <script>
+    //JS alamat
+    const BASE = 'https://www.emsifa.com/api-wilayah-indonesia/api';
+
+async function fetchWilayah(url) {
+    const res = await fetch(url);
+    return res.json();
+}
+
+function isiSelect(el, data, keyId, keyNama, placeholder) {
+    el.innerHTML = `<option value="">${placeholder}</option>`;
+    data.forEach(d => {
+        el.innerHTML += `<option value="${d[keyId]}" data-nama="${d[keyNama]}">${d[keyNama]}</option>`;
+    });
+    el.disabled = false;
+}
+
+function resetSelect(el, placeholder) {
+    el.innerHTML = `<option value="">${placeholder}</option>`;
+    el.disabled = true;
+}
+
+function updateAlamatLengkap() {
+    const parts = ['provinsi','kabupaten','kecamatan','desa']
+        .map(id => {
+            const el = document.getElementById(id);
+            const opt = el.options[el.selectedIndex];
+            return opt && opt.dataset.nama ? opt.dataset.nama : '';
+        })
+        .filter(Boolean);
+    const detail = document.getElementById('alamat_detail').value.trim();
+    if (detail) parts.push(detail);
+    document.getElementById('alamat_lengkap').value = parts.join(', ');
+}
+
+async function loadProvinsi() {
+    const data = await fetchWilayah(`${BASE}/provinces.json`);
+    isiSelect(document.getElementById('provinsi'), data, 'id', 'name', '— Pilih Provinsi —');
+}
+
+async function loadKabupaten() {
+    const prov = document.getElementById('provinsi');
+    updateAlamatLengkap();
+    resetSelect(document.getElementById('kabupaten'), '— Pilih Kabupaten —');
+    resetSelect(document.getElementById('kecamatan'), '— Pilih Kecamatan —');
+    resetSelect(document.getElementById('desa'), '— Pilih Desa —');
+    if (!prov.value) return;
+    const data = await fetchWilayah(`${BASE}/regencies/${prov.value}.json`);
+    isiSelect(document.getElementById('kabupaten'), data, 'id', 'name', '— Pilih Kabupaten —');
+}
+
+async function loadKecamatan() {
+    const kab = document.getElementById('kabupaten');
+    updateAlamatLengkap();
+    resetSelect(document.getElementById('kecamatan'), '— Pilih Kecamatan —');
+    resetSelect(document.getElementById('desa'), '— Pilih Desa —');
+    if (!kab.value) return;
+    const data = await fetchWilayah(`${BASE}/districts/${kab.value}.json`);
+    isiSelect(document.getElementById('kecamatan'), data, 'id', 'name', '— Pilih Kecamatan —');
+}
+
+async function loadDesa() {
+    const kec = document.getElementById('kecamatan');
+    updateAlamatLengkap();
+    resetSelect(document.getElementById('desa'), '— Pilih Desa —');
+    if (!kec.value) return;
+    const data = await fetchWilayah(`${BASE}/villages/${kec.value}.json`);
+    isiSelect(document.getElementById('desa'), data, 'id', 'name', '— Pilih Desa —');
+}
+
+// Update alamat lengkap saat desa dipilih atau detail diketik
+document.getElementById('desa').addEventListener('change', updateAlamatLengkap);
+document.getElementById('alamat_detail').addEventListener('input', updateAlamatLengkap);
+
+// Load provinsi saat halaman dibuka
+loadProvinsi();
+
+//JS Password
     const togglePassword = document.querySelector('#togglePassword');
     const password = document.querySelector('#password');
 
