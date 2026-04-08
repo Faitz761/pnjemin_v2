@@ -4,7 +4,7 @@
 <style>
 .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center; }
 .modal-overlay.active { display:flex; }
-.modal { background:white;border-radius:14px;padding:1.8rem;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+.modal { background:white;border-radius:14px;padding:1.8rem;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto; }
 .modal h3 { font-family:'Syne',sans-serif;margin-bottom:1rem; }
 .form-group { margin-bottom:1rem; }
 .form-group label { display:block;font-size:0.83rem;font-weight:700;margin-bottom:0.4rem; }
@@ -46,7 +46,13 @@
                     {% if l.status == 'menunggu' %}
                     <button class="btn btn-primary btn-sm" onclick="openModal({{ l.id }})"><i class="fas fa-gavel"></i> Putuskan</button>
                     {% else %}
-                    <div style="font-size:0.75rem;color:var(--text-muted);max-width:120px">{{ l.keputusan or '—' }}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);max-width:120px">
+                        {{ l.keputusan or '—' }}
+                        {% if l.nominal_denda %}
+                        <div style="margin-top:0.2rem;color:var(--primary)">Denda: Rp {{ "{:,.0f}".format(l.nominal_denda) }}</div>
+                        <div>Pemilik terima: Rp {{ "{:,.0f}".format(l.pemilik_terima) }}</div>
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </td>
             </tr>
@@ -72,6 +78,21 @@
                     <label><input type="radio" name="keputusan" value="Denda sebagian — Perlu negosiasi lebih lanjut"> ⚖️ Denda sebagian — Perlu negosiasi</label>
                 </div>
             </div>
+
+            <!-- NOMINAL DENDA (muncul kalau disetujui/sebagian) -->
+            <div class="form-group" id="nominal_group" style="display:none">
+                <label>Nominal Denda (Rp)</label>
+                <input type="number" name="nominal_denda" id="nominal_denda" class="form-control" min="0" placeholder="Contoh: 150000" style="margin-top:0.4rem">
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">
+                    Platform ambil: ≤Rp100rb → 20% &nbsp;|&nbsp; ≤Rp500rb → 25% &nbsp;|&nbsp; >Rp500rb → 30%
+                </div>
+                <div id="rincian_denda" style="display:none;margin-top:0.6rem;background:var(--bg);border-radius:6px;padding:0.7rem;font-size:0.82rem">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem"><span>Nominal denda</span><span id="d_nominal">—</span></div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;color:var(--danger)"><span>Potongan platform</span><span id="d_potongan">—</span></div>
+                    <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--primary)"><span>Pemilik terima</span><span id="d_terima">—</span></div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>Catatan Tambahan (opsional)</label>
                 <textarea name="catatan" class="form-control" rows="2" placeholder="Penjelasan singkat keputusan..."></textarea>
@@ -88,6 +109,10 @@
 <script>
 function openModal(id) {
     document.getElementById('modalForm').action = '/admin/selesaikan_laporan/' + id;
+    // Reset form
+    document.getElementById('modalForm').reset();
+    document.getElementById('nominal_group').style.display = 'none';
+    document.getElementById('rincian_denda').style.display = 'none';
     document.getElementById('modalOverlay').classList.add('active');
 }
 function closeModal() {
@@ -95,6 +120,33 @@ function closeModal() {
 }
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
+});
+
+// Tampilkan input nominal denda kalau keputusan disetujui atau sebagian
+document.querySelectorAll('input[name=keputusan]').forEach(r => {
+    r.addEventListener('change', function() {
+        const group = document.getElementById('nominal_group');
+        const tampil = this.value.includes('disetujui') || this.value.includes('sebagian');
+        group.style.display = tampil ? 'block' : 'none';
+        if (!tampil) {
+            document.getElementById('rincian_denda').style.display = 'none';
+            document.getElementById('nominal_denda').value = '';
+        }
+    });
+});
+
+// Hitung otomatis potongan platform
+document.getElementById('nominal_denda').addEventListener('input', function() {
+    const nominal = parseFloat(this.value) || 0;
+    const rincian = document.getElementById('rincian_denda');
+    if (nominal <= 0) { rincian.style.display = 'none'; return; }
+    const pct = nominal <= 100000 ? 0.20 : nominal <= 500000 ? 0.25 : 0.30;
+    const potongan = Math.round(nominal * pct);
+    const terima = nominal - potongan;
+    document.getElementById('d_nominal').textContent = 'Rp ' + nominal.toLocaleString('id-ID');
+    document.getElementById('d_potongan').textContent = 'Rp ' + potongan.toLocaleString('id-ID') + ' (' + (pct*100) + '%)';
+    document.getElementById('d_terima').textContent = 'Rp ' + terima.toLocaleString('id-ID');
+    rincian.style.display = 'block';
 });
 </script>
 {% endblock %}

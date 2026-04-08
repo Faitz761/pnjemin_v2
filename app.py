@@ -350,6 +350,19 @@ def init_db():
             except: pass
         conn.commit()
 
+for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
+    try:
+        db_execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}", commit=True) if USE_POSTGRES else None
+    except: pass
+if not USE_POSTGRES:
+    conn = get_db()
+    c = conn.cursor()
+    for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
+        try:
+            c.execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}")
+        except: pass
+    conn.commit()
+
     # Buat admin jika belum ada
     existing = db_execute("SELECT id FROM users WHERE email='admin@pnjemin.com'", fetchone=True)
     if not existing:
@@ -358,6 +371,8 @@ def init_db():
             ('Admin','admin@pnjemin.com',generate_password_hash('admin123'),'admin','admin'),
             commit=True
         )
+    
+    
 
     # Seed data barang demo jika belum ada
     existing_barang = db_execute("SELECT id FROM barang LIMIT 1", fetchone=True)
@@ -487,8 +502,12 @@ def booking(id_barang):
     if request.method == 'POST':
         durasi = int(request.form['durasi'])
         metode_bayar = request.form['metode_pembayaran']
+        biaya_sewa = barang['harga_sewa']
+        subtotal = biaya_sewa * durasi
+        biaya_admin = round(subtotal * 0.05)
+        total_biaya = subtotal + biaya_admin
         db_execute("INSERT INTO transaksi (id_user,id_barang,tanggal_pinjam,durasi,metode_pengambilan,metode_pembayaran,biaya_sewa,total_biaya) VALUES (?,?,?,?,?,?,?,?)",
-                   (session['user_id'],id_barang,request.form['tanggal_pinjam'],durasi,request.form['metode_pengambilan'],metode_bayar,barang['harga_sewa'],barang['harga_sewa']*durasi), commit=True)
+                   (session['user_id'],id_barang,request.form['tanggal_pinjam'],durasi,request.form['metode_pengambilan'],metode_bayar,biaya_sewa,total_biaya), commit=True)
         add_notif(barang['id_pemilik'],f"Ada permintaan booking untuk '{barang['nama_barang']}'!")
         flash('Permintaan peminjaman dikirim! Menunggu persetujuan pemilik.','success')
         return redirect(url_for('riwayat'))
@@ -715,17 +734,50 @@ def edit_barang(id_barang):
         return redirect(url_for('barang_saya'))
     return render_template('edit_barang.html', barang=barang, notif_count=notif_count())
 
+def hitung_biaya_upload(harga_sewa):
+    """Hitung biaya upload berdasarkan harga sewa per hari.
+    Threshold berdasarkan harga sewa/hari bukan nilai barang."""
+    if harga_sewa < 5000000: return 0
+    elif harga_sewa < 10000000: return round(harga_sewa * 0.04)
+    elif harga_sewa < 15000000: return round(harga_sewa * 0.06)
+    elif harga_sewa < 20000000: return round(harga_sewa * 0.08)
+    elif harga_sewa < 25000000: return round(harga_sewa * 0.10)
+    else: return round(harga_sewa * 0.12)
+
 @app.route('/upload_barang', methods=['GET','POST'])
 def upload_barang():
     if 'user_id' not in session: return redirect(url_for('login'))
     if cek_blokir(): return redirect(url_for('akun_diblokir'))
     if request.method == 'POST':
+        harga_sewa = float(request.form['harga_sewa'])
+        biaya_upload = hitung_biaya_upload(harga_sewa)
+        # Kalau ada biaya upload, redirect ke halaman konfirmasi pembayaran dulu
+        if biaya_upload > 0:
+            return render_template('upload_barang.html',
+                notif_count=notif_count(),
+                konfirmasi=True,
+                form_data=request.form,
+                biaya_upload=biaya_upload,
+                harga_sewa=harga_sewa
+            )
+        # Kalau tidak ada biaya, langsung simpan
         foto = save_foto(request.files.get('foto'), f'barang_{session["user_id"]}')
         db_execute("INSERT INTO barang (nama_barang,kategori,harga_sewa,deskripsi,lokasi,stok,foto,id_pemilik) VALUES (?,?,?,?,?,?,?,?)",
-                   (request.form['nama_barang'],request.form['kategori'],float(request.form['harga_sewa']),request.form['deskripsi'],request.form['lokasi'],int(request.form['stok']),foto,session['user_id']), commit=True)
+                   (request.form['nama_barang'],request.form['kategori'],harga_sewa,request.form['deskripsi'],request.form['lokasi'],int(request.form['stok']),foto,session['user_id']), commit=True)
         flash('Barang berhasil diupload!','success')
         return redirect(url_for('barang_saya'))
     return render_template('upload_barang.html', notif_count=notif_count())
+
+@app.route('/upload_barang/konfirmasi', methods=['POST'])
+def upload_barang_konfirmasi():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    harga_sewa = float(request.form['harga_sewa'])
+    biaya_upload = hitung_biaya_upload(harga_sewa)
+    foto = save_foto(request.files.get('foto'), f'barang_{session["user_id"]}')
+    db_execute("INSERT INTO barang (nama_barang,kategori,harga_sewa,deskripsi,lokasi,stok,foto,id_pemilik) VALUES (?,?,?,?,?,?,?,?)",
+               (request.form['nama_barang'],request.form['kategori'],harga_sewa,request.form['deskripsi'],request.form['lokasi'],int(request.form['stok']),foto,session['user_id']), commit=True)
+    flash(f'Barang berhasil diupload! Biaya listing Rp {biaya_upload:,.0f} telah dicatat.','success')
+    return redirect(url_for('barang_saya'))
 
 @app.route('/setujui_booking/<int:id_transaksi>')
 def setujui_booking(id_transaksi):

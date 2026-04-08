@@ -2,6 +2,14 @@
 {% block title %}Upload Barang - P-Njemin{% endblock %}
 {% block extra_css %}
 <style>
+.biaya-box { background: #fff8e1; border: 1.5px solid #ffe082; border-radius: var(--radius-sm); padding: 1.2rem; margin-bottom: 1.2rem; }
+.biaya-box .biaya-title { font-weight: 700; color: #7a5c00; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.biaya-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #7a5c00; margin-bottom: 0.3rem; }
+.biaya-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 1rem; color: #e65100; padding-top: 0.5rem; border-top: 1px solid #ffe082; margin-top: 0.3rem; }
+.tier-info { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.9rem 1rem; margin-bottom: 1.2rem; font-size: 0.82rem; color: var(--text-muted); }
+.tier-info table { width: 100%; border-collapse: collapse; }
+.tier-info td { padding: 0.2rem 0.5rem; }
+.tier-info td:last-child { text-align: right; font-weight: 600; color: var(--primary); }
 .upload-wrap { max-width: 580px; margin: 0 auto; padding: 1.5rem; }
 .foto-upload-area {
     border: 2px dashed var(--border); border-radius: var(--radius-sm);
@@ -79,6 +87,51 @@
         </div>
     </div>
 </div>
+{% if konfirmasi %}
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:14px;padding:2rem;width:460px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+        <h3 style="font-family:'Syne',sans-serif;margin-bottom:0.5rem">💰 Biaya Listing Barang</h3>
+        <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:1.2rem">Barang kamu termasuk kategori bernilai tinggi dan dikenakan biaya listing.</p>
+
+        <div class="biaya-box">
+            <div class="biaya-title">Rincian Biaya</div>
+            <div class="biaya-row"><span>Harga sewa/hari</span><span>Rp {{ "{:,.0f}".format(harga_sewa) }}</span></div>
+            <div class="biaya-row"><span>Nama barang</span><span>{{ form_data.nama_barang }}</span></div>
+            <div class="biaya-total"><span>Biaya listing</span><span>Rp {{ "{:,.0f}".format(biaya_upload) }}</span></div>
+        </div>
+
+        <div class="tier-info">
+            <table>
+                <tr><td>Rp5jt – &lt;10jt</td><td>4%</td></tr>
+                <tr><td>Rp10jt – &lt;15jt</td><td>6%</td></tr>
+                <tr><td>Rp15jt – &lt;20jt</td><td>8%</td></tr>
+                <tr><td>Rp20jt – &lt;25jt</td><td>10%</td></tr>
+                <tr><td>≥ Rp25jt</td><td>12%</td></tr>
+            </table>
+        </div>
+
+        <form method="post" action="{{ url_for('upload_barang_konfirmasi') }}" enctype="multipart/form-data">
+            <!-- Re-submit semua data form -->
+            <input type="hidden" name="nama_barang" value="{{ form_data.nama_barang }}">
+            <input type="hidden" name="kategori" value="{{ form_data.kategori }}">
+            <input type="hidden" name="harga_sewa" value="{{ harga_sewa }}">
+            <input type="hidden" name="deskripsi" value="{{ form_data.deskripsi }}">
+            <input type="hidden" name="lokasi" value="{{ form_data.lokasi }}">
+            <input type="hidden" name="stok" value="{{ form_data.stok }}">
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem">⚠️ Upload ulang foto kamu karena tidak bisa diteruskan otomatis.</p>
+            <div class="form-group">
+                <input type="file" name="foto" accept="image/*" class="form-control" required>
+            </div>
+            <div style="display:flex;gap:0.75rem;margin-top:1rem">
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
+                    <i class="fas fa-check"></i> Setuju & Upload
+                </button>
+                <a href="{{ url_for('upload_barang') }}" class="btn btn-outline">Batal</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 {% block extra_js %}
 <script>

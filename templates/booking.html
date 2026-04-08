@@ -91,7 +91,9 @@
                 <div class="cost-summary">
                     <div class="cost-row"><span>Harga sewa per hari</span><span>Rp {{ "{:,.0f}".format(barang.harga_sewa) }}</span></div>
                     <div class="cost-row"><span>Durasi</span><span id="durasi_display">1 hari</span></div>
-                    <div class="cost-total"><span>Total Biaya</span><span id="total_display">Rp {{ "{:,.0f}".format(barang.harga_sewa) }}</span></div>
+                    <div class="cost-row"><span>Subtotal sewa</span><span id="subtotal_display">Rp {{ "{:,.0f}".format(barang.harga_sewa) }}</span></div>
+                    <div class="cost-row"><span>Biaya layanan (5%)</span><span id="admin_display">Rp {{ "{:,.0f}".format(barang.harga_sewa * 0.05) }}</span></div>
+                    <div class="cost-total"><span>Total Bayar</span><span id="total_display">Rp {{ "{:,.0f}".format(barang.harga_sewa * 1.05) }}</span></div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">
@@ -110,9 +112,13 @@ const totalDisplay = document.getElementById('total_display');
 const durasiDisplay = document.getElementById('durasi_display');
 function updateTotal() {
     const dur = parseInt(durInput.value) || 1;
-    const total = harga * dur;
-    totalDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
+    const subtotal = harga * dur;
+    const admin = Math.round(subtotal * 0.05);
+    const total = subtotal + admin;
     durasiDisplay.textContent = dur + ' hari';
+    document.getElementById('subtotal_display').textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+    document.getElementById('admin_display').textContent = 'Rp ' + admin.toLocaleString('id-ID');
+    totalDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
 }
 durInput.addEventListener('input', updateTotal);
 
