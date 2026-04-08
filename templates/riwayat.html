@@ -60,6 +60,16 @@
             {% if t.status == 'menunggu_pembayaran' %}
             <a href="{{ url_for('pembayaran', id_transaksi=t.id) }}" class="btn btn-primary btn-sm"><i class="fas fa-wallet"></i> Bayar Sekarang</a>
             {% endif %}
+            {% if t.status == 'sedang_dipinjam' and not t.checkin_status %}
+            <a href="{{ url_for('checkin_barang', id_transaksi=t.id) }}" class="btn btn-primary btn-sm">
+             <i class="fas fa-clipboard-check"></i> Verifikasi Penerimaan
+            </a>
+            {% endif %}
+            {% if t.status == 'sedang_dipinjam' and t.checkin_status %}
+            <span class="badge badge-success" style="font-size:0.78rem">
+            <i class="fas fa-check"></i> Barang sudah diverifikasi
+            </span>
+            {% endif %}
             {% if t.status == 'sedang_dipinjam' %}
             <form method="post" action="{{ url_for('ajukan_pengembalian', id_transaksi=t.id) }}" style="display:inline" onsubmit="return confirm('Ajukan pengembalian barang ini?')">
                 <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-undo"></i> Kembalikan Barang</button>

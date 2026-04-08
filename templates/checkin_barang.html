@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Verifikasi Penerimaan Barang - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.checkin-wrap { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+.checkin-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.8rem; box-shadow: var(--shadow); }
+.kondisi-awal { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.5rem; }
+.kondisi-awal img { width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--radius-sm); margin-top: 0.5rem; }
+.radio-row { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem; }
+.radio-row label { display: flex; align-items: center; gap: 0.6rem; font-weight: 500; font-size: 0.88rem; cursor: pointer; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px; transition: 0.15s; }
+.radio-row label:hover { border-color: var(--primary); background: var(--primary-light); }
+.warning-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 0.9rem 1rem; font-size: 0.85rem; color: #7a5c00; margin-bottom: 1.2rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="checkin-wrap">
+    <div class="page-header">
+        <h1><i class="fas fa-clipboard-check" style="color:var(--primary)"></i> Verifikasi Penerimaan</h1>
+        <p>Konfirmasi kondisi barang saat kamu terima</p>
+    </div>
+    <div class="checkin-card">
+        <!-- Info barang -->
+        <div class="kondisi-awal">
+            <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">BARANG YANG DITERIMA</div>
+            <div style="font-weight:700;font-size:0.95rem">{{ transaksi.nama_barang }}</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.2rem">#TRX{{ '%04d'|format(transaksi.id) }}</div>
+            {% if transaksi.foto_serah %}
+            <div style="margin-top:0.75rem">
+                <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">FOTO KONDISI AWAL (dari pemilik)</div>
+                <img src="{{ transaksi.foto_serah | foto_src }}" alt="Kondisi awal">
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="warning-box">
+            ⚠️ <strong>Perhatian:</strong> Verifikasi ini hanya bisa dilakukan sekali dan tidak bisa diubah. Pastikan kamu sudah memeriksa kondisi barang dengan teliti sebelum submit.
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            <!-- Status kondisi -->
+            <div class="form-group">
+                <label style="font-weight:700">Kondisi barang saat diterima <span style="color:var(--danger)">*</span></label>
+                <div class="radio-row">
+                    <label><input type="radio" name="checkin_status" value="sesuai" required> <span>✅ Sesuai — kondisi barang sesuai dengan foto/deskripsi pemilik</span></label>
+                    <label><input type="radio" name="checkin_status" value="tidak_sesuai"> <span>⚠️ Tidak sesuai — ada perbedaan kondisi dari yang dijanjikan</span></label>
+                </div>
+            </div>
+
+            <!-- Catatan -->
+            <div class="form-group" style="margin-top:1.2rem">
+                <label style="font-weight:700">Catatan <span style="font-weight:400;color:var(--text-muted)">(wajib jika tidak sesuai)</span></label>
+                <textarea name="checkin_catatan" class="form-control" rows="3" placeholder="Deskripsikan kondisi barang yang kamu terima..." style="resize:none;margin-top:0.4rem"></textarea>
+            </div>
+
+            <!-- Foto -->
+            <div class="form-group" style="margin-top:1.2rem">
+                <label style="font-weight:700">Foto kondisi barang saat diterima <span style="color:var(--danger)">*</span></label>
+                <input type="file" name="foto_checkin" accept="image/*" class="form-control" style="margin-top:0.4rem" required>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Foto wajib sebagai bukti kondisi awal. Format: JPG, PNG, WEBP.</div>
+            </div>
+
+            <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
+                    <i class="fas fa-check"></i> Konfirmasi Penerimaan
+                </button>
+                <a href="{{ url_for('riwayat') }}" class="btn btn-outline">Batal</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

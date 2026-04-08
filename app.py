@@ -335,6 +335,21 @@ def init_db():
 
     db_executescript(sql)
 
+# Migrasi: tambah kolom checkin jika belum ada
+    if USE_POSTGRES:
+        for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
+            try:
+                db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
+            except: pass
+    else:
+        conn = get_db()
+        c = conn.cursor()
+        for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
+            try:
+                c.execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}")
+            except: pass
+        conn.commit()
+
     # Buat admin jika belum ada
     existing = db_execute("SELECT id FROM users WHERE email='admin@pnjemin.com'", fetchone=True)
     if not existing:
@@ -525,6 +540,42 @@ def ajukan_pengembalian(id_transaksi):
     add_notif(t['id_pemilik'],f"Peminjam mengajukan pengembalian untuk '{t['nama_barang']}'. Silakan konfirmasi.")
     flash('Pengembalian diajukan! Menunggu konfirmasi pemilik.','success')
     return redirect(url_for('riwayat'))
+
+@app.route('/checkin_barang/<int:id_transaksi>', methods=['GET','POST'])
+def checkin_barang(id_transaksi):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    if cek_blokir(): return redirect(url_for('akun_diblokir'))
+    t = db_execute("""
+        SELECT t.*,b.nama_barang,b.foto_serah,b.foto as foto_barang
+        FROM transaksi t JOIN barang b ON t.id_barang=b.id
+        WHERE t.id=? AND t.id_user=?
+    """, (id_transaksi, session['user_id']), fetchone=True)
+    if not t or t['status'] != 'sedang_dipinjam':
+        flash('Tidak bisa melakukan checkin.', 'error')
+        return redirect(url_for('riwayat'))
+    if t['checkin_status']:
+        flash('Kamu sudah melakukan verifikasi penerimaan untuk transaksi ini.', 'error')
+        return redirect(url_for('riwayat'))
+    if request.method == 'POST':
+        status = request.form.get('checkin_status')
+        catatan = request.form.get('checkin_catatan', '')
+        foto = save_foto(request.files.get('foto_checkin'), f'checkin_{id_transaksi}')
+        if not foto:
+            flash('Foto wajib diupload sebagai bukti penerimaan.', 'error')
+            return render_template('checkin_barang.html', transaksi=t, notif_count=notif_count())
+        db_execute("""
+            UPDATE transaksi SET foto_checkin=?, checkin_status=?, checkin_catatan=?, checkin_at=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (foto, status, catatan, id_transaksi), commit=True)
+        pemilik = db_execute("SELECT id_pemilik FROM barang WHERE id=?", (t['id_barang'],), fetchone=True)
+        if status == 'sesuai':
+            add_notif(pemilik['id_pemilik'], f"Peminjam mengkonfirmasi barang '{t['nama_barang']}' diterima dalam kondisi sesuai.")
+            flash('Konfirmasi penerimaan berhasil! Selamat menikmati.', 'success')
+        else:
+            add_notif(pemilik['id_pemilik'], f"⚠️ Peminjam melaporkan kondisi '{t['nama_barang']}' tidak sesuai saat diterima!")
+            flash('Laporan ketidaksesuaian terkirim ke pemilik.', 'warning')
+        return redirect(url_for('riwayat'))
+    return render_template('checkin_barang.html', transaksi=t, notif_count=notif_count())
 
 @app.route('/laporan/<int:id_transaksi>', methods=['GET','POST'])
 def laporan(id_transaksi):
