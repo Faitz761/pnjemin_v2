@@ -104,8 +104,7 @@
         </form>
     </div>
 </div>
-{% endblock %}
-{% block extra_js %}
+
 <script>
 function openModal(id) {
     document.getElementById('modalForm').action = '/admin/selesaikan_laporan/' + id;
@@ -149,4 +148,5 @@ document.getElementById('nominal_denda').addEventListener('input', function() {
     rincian.style.display = 'block';
 });
 </script>
+
 {% endblock %}
