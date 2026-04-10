@@ -150,6 +150,28 @@ def cek_blokir():
             return True
     return False
 
+def cek_auto_freeze():
+    """Bekukan akun peminjam otomatis jika denda tidak dibayar 2x24 jam."""
+    if 'user_id' not in session: return
+    if session.get('tipe_akun') != 'peminjam': return
+    denda_telat = db_execute("""
+        SELECT l.id FROM laporan l
+        JOIN transaksi t ON l.id_transaksi=t.id
+        WHERE t.id_user=? AND l.tipe_pelapor='pemilik'
+        AND l.status='selesai' AND l.total_tagihan > 0
+        AND l.created_at < NOW() - INTERVAL '48 hours'
+    """ if USE_POSTGRES else """
+        SELECT l.id FROM laporan l
+        JOIN transaksi t ON l.id_transaksi=t.id
+        WHERE t.id_user=? AND l.tipe_pelapor='pemilik'
+        AND l.status='selesai' AND l.total_tagihan > 0
+        AND l.created_at < datetime('now', '-48 hours')
+    """, (session['user_id'],), fetchone=True)
+    if denda_telat:
+        db_execute("UPDATE users SET status='diblokir' WHERE id=?",
+                   (session['user_id'],), commit=True)
+        session['status'] = 'diblokir'
+
 def save_foto(f, prefix):
     """Upload foto ke Cloudinary (production) atau lokal (development)."""
     if not f or not f.filename or not allowed_file(f.filename):
@@ -476,6 +498,9 @@ def login():
             session.update({'user_id':user['id'],'nama':user['nama'],'tipe_akun':user['tipe_akun'],'role':user['role'],'status':user['status']})
             if user['status'] == 'diblokir':
                 return redirect(url_for('akun_diblokir'))
+            cek_auto_freeze()
+            if session.get('status') == 'diblokir':
+                return redirect(url_for('akun_diblokir'))
             return redirect(request.args.get('next') or url_for('home'))
         flash('Email atau password salah!','error')
     return render_template('login.html', notif_count=notif_count())
@@ -553,9 +578,22 @@ def riwayat():
         FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON b.id_pemilik=u.id
         WHERE t.id_user=? ORDER BY t.created_at DESC
     """,(session['user_id'],), fetchall=True)
-    reviews_done = [r['id_transaksi'] for r in db_execute("SELECT id_transaksi FROM review WHERE id_reviewer=?",(session['user_id'],), fetchall=True)]
-    laporan_done = [l['id_transaksi'] for l in db_execute("SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='peminjam'",(session['user_id'],), fetchall=True)]
-    return render_template('riwayat.html', transaksi=transaksi, reviews_done=reviews_done, laporan_done=laporan_done, notif_count=notif_count())
+    reviews_done = [r['id_transaksi'] for r in db_execute(
+        "SELECT id_transaksi FROM review WHERE id_reviewer=?",(session['user_id'],), fetchall=True)]
+    laporan_done = [l['id_transaksi'] for l in db_execute(
+        "SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='peminjam'",(session['user_id'],), fetchall=True)]
+    # Ambil denda aktif untuk peminjam ini
+    denda_aktif = db_execute("""
+        SELECT l.*,b.nama_barang
+        FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id
+        JOIN barang b ON t.id_barang=b.id
+        WHERE t.id_user=? AND l.tipe_pelapor='pemilik' AND l.status='selesai'
+        AND l.total_tagihan IS NOT NULL AND l.total_tagihan > 0
+        ORDER BY l.created_at DESC
+    """,(session['user_id'],), fetchall=True)
+    return render_template('riwayat.html', transaksi=transaksi,
+                           reviews_done=reviews_done, laporan_done=laporan_done,
+                           denda_aktif=denda_aktif, notif_count=notif_count())
 
 @app.route('/pembayaran/<int:id_transaksi>', methods=['GET','POST'])
 def pembayaran(id_transaksi):
@@ -725,7 +763,8 @@ def barang_saya():
         FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON t.id_user=u.id
         WHERE b.id_pemilik=? AND t.status='selesai' ORDER BY t.created_at DESC LIMIT 20
     """,(session['user_id'],), fetchall=True)
-    denda_done = [l['id_transaksi'] for l in db_execute("SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='pemilik'",(session['user_id'],), fetchall=True)]
+    denda_done = [l['id_transaksi'] for l in db_execute(
+        "SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='pemilik'",(session['user_id'],), fetchall=True)]
     laporan_masuk = db_execute("""
         SELECT l.*,u.nama as nama_peminjam,b.nama_barang
         FROM laporan l JOIN users u ON l.id_pelapor=u.id
@@ -733,10 +772,20 @@ def barang_saya():
         WHERE b.id_pemilik=? AND l.tipe_pelapor='peminjam' AND l.status='menunggu'
         ORDER BY l.created_at DESC
     """,(session['user_id'],), fetchall=True)
-    reviews_peminjam_done = [r['id_transaksi'] for r in db_execute("SELECT id_transaksi FROM review_peminjam WHERE id_pemilik=?",(session['user_id'],), fetchall=True)]
+    reviews_peminjam_done = [r['id_transaksi'] for r in db_execute(
+        "SELECT id_transaksi FROM review_peminjam WHERE id_pemilik=?",(session['user_id'],), fetchall=True)]
+    # Laporan denda yang menunggu input nominal dari pemilik
+    laporan_tunggu_nominal = db_execute("""
+        SELECT l.id,l.id_transaksi,b.nama_barang,l.jenis_masalah,l.kategori_kerusakan
+        FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id
+        JOIN barang b ON t.id_barang=b.id
+        WHERE l.id_pelapor=? AND l.status='menunggu_harga'
+        ORDER BY l.created_at DESC
+    """,(session['user_id'],), fetchall=True)
     return render_template('barang_saya.html', barang=barang, bookings=bookings,
                            aktif=aktif, selesai=selesai, denda_done=denda_done,
                            laporan_masuk=laporan_masuk, reviews_peminjam_done=reviews_peminjam_done,
+                           laporan_tunggu_nominal=laporan_tunggu_nominal,
                            notif_count=notif_count())
 
 @app.route('/edit_barang/<int:id_barang>', methods=['GET','POST'])
@@ -928,6 +977,34 @@ def denda(id_transaksi):
                            foto_serah=foto_serah, foto_terima=foto_terima,
                            notif_count=notif_count())
 
+@app.route('/input_nominal_denda/<int:id_laporan>', methods=['GET','POST'])
+def input_nominal_denda(id_laporan):
+    """Step 3: Pemilik input nominal biaya perbaikan setelah admin validasi"""
+    if 'user_id' not in session: return redirect(url_for('login'))
+    l = db_execute("""
+        SELECT l.*,b.nama_barang,b.id_pemilik,t.id_user,t.foto_serah,t.foto_terima
+        FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id
+        JOIN barang b ON t.id_barang=b.id WHERE l.id=?
+    """, (id_laporan,), fetchone=True)
+    if not l or l['id_pemilik'] != session['user_id']:
+        return redirect(url_for('barang_saya'))
+    if l['status'] != 'menunggu_harga':
+        flash('Laporan ini tidak memerlukan input nominal.', 'error')
+        return redirect(url_for('barang_saya'))
+    if request.method == 'POST':
+        nominal_pemilik = float(request.form['nominal_perbaikan'])
+        pct = hitung_fee_denda(nominal_pemilik)
+        potongan = round(nominal_pemilik * pct)
+        total_tagihan = nominal_pemilik + potongan
+        db_execute("""
+            UPDATE laporan SET nominal_pemilik=?, potongan_platform=?,
+            total_tagihan=?, status='menunggu_review' WHERE id=?
+        """, (nominal_pemilik, potongan, total_tagihan, id_laporan), commit=True)
+        add_notif(l['id_user'], f"Admin sedang mereview nominal denda untuk '{l['nama_barang']}'.")
+        flash('Nominal dikirim! Menunggu review akhir admin.', 'success')
+        return redirect(url_for('barang_saya'))
+    return render_template('input_nominal_denda.html', laporan=l, notif_count=notif_count())
+
 @app.route('/review_peminjam/<int:id_transaksi>', methods=['GET','POST'])
 def review_peminjam(id_transaksi):
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -1056,45 +1133,50 @@ def admin_hapus_barang(id):
 def admin_laporan():
     if session.get('role') != 'admin': return redirect(url_for('admin_login'))
     laporan = db_execute("""
-        SELECT l.*,u.nama as nama_pelapor,b.nama_barang
+        SELECT l.*,u.nama as nama_pelapor,b.nama_barang,
+               t.foto_serah,t.foto_terima
         FROM laporan l JOIN users u ON l.id_pelapor=u.id
-        JOIN transaksi t ON l.id_transaksi=t.id JOIN barang b ON t.id_barang=b.id
+        JOIN transaksi t ON l.id_transaksi=t.id
+        JOIN barang b ON t.id_barang=b.id
         WHERE l.tipe_pelapor='pemilik'
         ORDER BY l.created_at DESC
     """, fetchall=True)
     return render_template('admin/laporan.html', laporan=laporan)
 
-@app.route('/admin/selesaikan_laporan/<int:id>', methods=['POST'])
-def admin_selesaikan_laporan(id):
+@app.route('/admin/validasi_laporan/<int:id>', methods=['POST'])
+def admin_validasi_laporan(id):
+    """Step 2: Admin validasi foto — setuju atau tolak"""
     if session.get('role') != 'admin': return redirect(url_for('admin_login'))
-    keputusan = request.form['keputusan']
-    nominal_denda = float(request.form.get('nominal_denda', 0) or 0)
-    l = db_execute("SELECT l.*,t.id_user,b.nama_barang,b.id_pemilik FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id JOIN barang b ON t.id_barang=b.id WHERE l.id=?",(id,), fetchone=True)
-
-    potongan = 0
-    pemilik_terima = 0
-    if nominal_denda > 0:
-        # Hitung persentase potongan berdasarkan nominal denda
-        if nominal_denda <= 100000:
-            pct = 0.20
-        elif nominal_denda <= 500000:
-            pct = 0.25
-        else:
-            pct = 0.30
-        potongan = round(nominal_denda * pct)
-        pemilik_terima = nominal_denda - potongan
-
-    db_execute("UPDATE laporan SET status='selesai', keputusan=?, nominal_denda=?, potongan_platform=?, pemilik_terima=? WHERE id=?",
-               (keputusan, nominal_denda, potongan, pemilik_terima, id), commit=True)
-
-    if nominal_denda > 0:
-        add_notif(l['id_user'], f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}. Kamu wajib membayar denda Rp {nominal_denda:,.0f}.")
-        add_notif(l['id_pemilik'], f"Laporan denda '{l['nama_barang']}' diputuskan. Kamu akan menerima Rp {pemilik_terima:,.0f} setelah potongan platform.")
+    aksi = request.form['aksi']
+    alasan = request.form.get('alasan_tolak', '')
+    l = db_execute("SELECT l.*,t.id_user,b.nama_barang,b.id_pemilik FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id JOIN barang b ON t.id_barang=b.id WHERE l.id=?", (id,), fetchone=True)
+    if aksi == 'setuju':
+        db_execute("UPDATE laporan SET status_validasi='disetujui', status='menunggu_harga' WHERE id=?", (id,), commit=True)
+        add_notif(l['id_pemilik'], f"✅ Laporan kerusakan '{l['nama_barang']}' divalidasi admin. Silakan masukkan nominal biaya perbaikan.")
+        flash('Laporan disetujui. Pemilik akan diminta input nominal.', 'success')
     else:
-        add_notif(l['id_user'], f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}")
-        add_notif(l['id_pemilik'], f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}")
+        db_execute("UPDATE laporan SET status_validasi='ditolak', status='ditolak', alasan_tolak=? WHERE id=?", (alasan, id), commit=True)
+        add_notif(l['id_pemilik'], f"❌ Laporan kerusakan '{l['nama_barang']}' ditolak admin. Alasan: {alasan}")
+        add_notif(l['id_user'], f"Laporan kerusakan '{l['nama_barang']}' dari pemilik ditolak admin.")
+        flash('Laporan ditolak.', 'success')
+    return redirect(url_for('admin_laporan'))
 
-    flash('Laporan diselesaikan!', 'success')
+@app.route('/admin/review_denda/<int:id>', methods=['POST'])
+def admin_review_denda(id):
+    """Step 5: Admin final review nominal dari pemilik"""
+    if session.get('role') != 'admin': return redirect(url_for('admin_login'))
+    aksi = request.form['aksi']
+    alasan = request.form.get('alasan_tolak', '')
+    l = db_execute("SELECT l.*,t.id_user,b.nama_barang,b.id_pemilik FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id JOIN barang b ON t.id_barang=b.id WHERE l.id=?", (id,), fetchone=True)
+    if aksi == 'setuju':
+        db_execute("UPDATE laporan SET status='selesai', keputusan='Denda disetujui' WHERE id=?", (id,), commit=True)
+        add_notif(l['id_user'], f"⚠️ Denda '{l['nama_barang']}' resmi diterbitkan. Total tagihan: Rp {l['total_tagihan']:,.0f}. Segera lunasi.")
+        add_notif(l['id_pemilik'], f"✅ Nominal denda '{l['nama_barang']}' disetujui admin. Kamu akan menerima Rp {l['nominal_pemilik']:,.0f} setelah denda dibayar.")
+        flash('Denda resmi diterbitkan!', 'success')
+    else:
+        db_execute("UPDATE laporan SET status='ditolak_nominal', keputusan='Nominal ditolak — terlalu tinggi', alasan_tolak=? WHERE id=?", (alasan, id), commit=True)
+        add_notif(l['id_pemilik'], f"❌ Nominal denda '{l['nama_barang']}' ditolak admin. Alasan: {alasan}. Kamu bisa ajukan ulang dengan nominal yang wajar.")
+        flash('Nominal ditolak. Pemilik bisa ajukan ulang.', 'success')
     return redirect(url_for('admin_laporan'))
 
 @app.route('/admin/banding')

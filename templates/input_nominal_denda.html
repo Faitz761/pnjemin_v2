@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Input Nominal Denda - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.wrap { max-width:520px;margin:0 auto;padding:1.5rem; }
+.kalkulasi-box { background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-top:0.75rem;font-size:0.85rem; }
+.kalkulasi-row { display:flex;justify-content:space-between;margin-bottom:0.35rem;color:var(--text-muted); }
+.kalkulasi-total { display:flex;justify-content:space-between;font-weight:800;font-size:1rem;color:var(--primary);padding-top:0.5rem;border-top:1px solid var(--border);margin-top:0.35rem; }
+.foto-compare { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.2rem; }
+.foto-box { border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden; }
+.foto-box .label { font-size:0.72rem;font-weight:700;padding:0.3rem 0.6rem;background:var(--bg);color:var(--text-muted); }
+.foto-box img { width:100%;height:130px;object-fit:cover;display:block; }
+.foto-box .nofoto { height:130px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.8rem;background:var(--bg); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+    <a href="{{ url_for('barang_saya') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+    <div class="card">
+        <div class="card-header" style="color:var(--primary)">
+            <i class="fas fa-coins"></i> Input Biaya Perbaikan
+        </div>
+        <div class="card-body">
+            <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1.2rem;font-size:0.85rem">
+                ✅ <strong>Admin telah memvalidasi laporan kamu.</strong> Sekarang masukkan biaya perbaikan yang kamu keluarkan. Admin akan mereview apakah nominal tersebut wajar.
+            </div>
+
+            <div style="font-size:0.82rem;font-weight:700;color:var(--text-muted);margin-bottom:0.5rem">PERBANDINGAN KONDISI BARANG</div>
+            <div class="foto-compare">
+                <div class="foto-box">
+                    <div class="label">📸 Sebelum Dipinjam</div>
+                    {% if laporan.foto_serah %}<img src="{{ laporan.foto_serah | foto_src }}">
+                    {% else %}<div class="nofoto">Tidak tersedia</div>{% endif %}
+                </div>
+                <div class="foto-box">
+                    <div class="label">📸 Setelah Dikembalikan</div>
+                    {% if laporan.foto_terima %}<img src="{{ laporan.foto_terima | foto_src }}">
+                    {% else %}<div class="nofoto">Tidak tersedia</div>{% endif %}
+                </div>
+            </div>
+
+            <div style="font-size:0.85rem;margin-bottom:1.2rem">
+                <strong>Barang:</strong> {{ laporan.nama_barang }}<br>
+                <strong>Jenis kerusakan:</strong> {{ laporan.jenis_masalah }}<br>
+                <strong>Kategori:</strong>
+                {% if laporan.kategori_kerusakan == 'Ringan' %}<span style="color:#2e7d32;font-weight:700">🟢 Ringan</span>
+                {% elif laporan.kategori_kerusakan == 'Sedang' %}<span style="color:#f57f17;font-weight:700">🟡 Sedang</span>
+                {% else %}<span style="color:#c62828;font-weight:700">🔴 Berat</span>{% endif %}
+            </div>
+
+            <form method="post">
+                <div class="form-group">
+                    <label style="font-weight:700">Biaya Perbaikan Asli (Rp) <span style="color:var(--danger)">*</span></label>
+                    <div style="position:relative;margin-top:0.4rem">
+                        <span style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);font-weight:600;color:var(--text-muted);font-size:0.88rem">Rp</span>
+                        <input type="number" name="nominal_perbaikan" id="nominal_input" class="form-control" style="padding-left:2.5rem" placeholder="0" min="1000" required oninput="hitungTotal()">
+                    </div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Masukkan biaya perbaikan yang sebenarnya. Jangan melebih-lebihkan — admin akan menolak jika tidak wajar.</div>
+
+                    <div class="kalkulasi-box" id="kalkulasi_box" style="display:none">
+                        <div class="kalkulasi-row"><span>Biaya perbaikan (kamu terima)</span><span id="k_nominal">—</span></div>
+                        <div class="kalkulasi-row"><span id="k_pct_label">Fee platform</span><span id="k_fee" style="color:var(--danger)">—</span></div>
+                        <div class="kalkulasi-total"><span>Total tagihan peminjam</span><span id="k_total">—</span></div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem">
+                    <i class="fas fa-paper-plane"></i> Kirim Nominal
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+function hitungTotal() {
+    const nominal = parseFloat(document.getElementById('nominal_input').value) || 0;
+    const box = document.getElementById('kalkulasi_box');
+    if (nominal <= 0) { box.style.display = 'none'; return; }
+    const tabel = [[100000,4],[500000,6],[1000000,8],[2000000,10],[3000000,12],[5000000,14],[7500000,16],[10000000,18],[12500000,20],[15000000,22],[17500000,24],[20000000,26]];
+    let pct = 30;
+    for (const [batas, p] of tabel) { if (nominal < batas) { pct = p; break; } }
+    const fee = Math.round(nominal * pct / 100);
+    const total = nominal + fee;
+    document.getElementById('k_nominal').textContent = 'Rp ' + nominal.toLocaleString('id-ID');
+    document.getElementById('k_pct_label').textContent = `Fee platform (${pct}%)`;
+    document.getElementById('k_fee').textContent = 'Rp ' + fee.toLocaleString('id-ID');
+    document.getElementById('k_total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    box.style.display = 'block';
+}
+</script>
+{% endblock %}

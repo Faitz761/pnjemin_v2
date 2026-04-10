@@ -4,148 +4,237 @@
 <style>
 .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center; }
 .modal-overlay.active { display:flex; }
-.modal { background:white;border-radius:14px;padding:1.8rem;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto; }
-.modal h3 { font-family:'Syne',sans-serif;margin-bottom:1rem; }
+.modal { background:white;border-radius:14px;padding:1.8rem;width:520px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto; }
+.modal h3 { font-family:'Syne',sans-serif;margin-bottom:0.5rem; }
 .form-group { margin-bottom:1rem; }
 .form-group label { display:block;font-size:0.83rem;font-weight:700;margin-bottom:0.4rem; }
-.radio-row { display:flex;flex-direction:column;gap:0.5rem;margin-top:0.3rem; }
-.radio-row label { display:flex;align-items:center;gap:0.5rem;font-weight:500;font-size:0.88rem;cursor:pointer;padding:0.5rem 0.7rem;border:1px solid var(--border);border-radius:6px; }
-.radio-row label:hover { background:var(--bg); }
+.foto-compare { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem; }
+.foto-box { border:1px solid var(--border);border-radius:6px;overflow:hidden; }
+.foto-box .label { font-size:0.72rem;font-weight:700;padding:0.3rem 0.6rem;background:var(--bg);color:var(--text-muted);border-bottom:1px solid var(--border); }
+.foto-box img { width:100%;height:130px;object-fit:cover;display:block; }
+.foto-box .nofoto { height:130px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.8rem;background:var(--bg); }
+.status-badge { font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:20px;font-weight:700;white-space:nowrap; }
+.s-menunggu_validasi { background:#fff8e1;color:#f57f17; }
+.s-menunggu_harga { background:#e3f2fd;color:#1565c0; }
+.s-menunggu_review { background:#f3e5f5;color:#6a1b9a; }
+.s-selesai { background:#e8f5e9;color:#2e7d32; }
+.s-ditolak { background:#ffebee;color:#c62828; }
+.s-ditolak_nominal { background:#ffebee;color:#c62828; }
 </style>
 {% endblock %}
 {% block content %}
 <div class="topbar">
     <h1><i class="fas fa-flag" style="color:var(--primary)"></i> Laporan Denda dari Pemilik</h1>
-    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.2rem">Laporan kerusakan barang yang diajukan pemilik setelah transaksi selesai</p>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.2rem">Laporan kerusakan barang — alur semi-otomatis</p>
 </div>
 <div class="card">
     <table class="table">
         <thead>
-            <tr><th>#</th><th>Pemilik</th><th>Barang</th><th>Jenis Masalah</th><th>Deskripsi</th><th>Foto</th><th>Status</th><th>Tgl</th><th>Aksi</th></tr>
+            <tr><th>#</th><th>Pemilik</th><th>Barang</th><th>Kategori</th><th>Jenis</th><th>Foto Bukti</th><th>Status</th><th>Nominal</th><th>Tgl</th><th>Aksi</th></tr>
         </thead>
         <tbody>
             {% for l in laporan %}
             <tr>
                 <td><strong>#{{ l.id }}</strong></td>
-                <td>{{ l.nama_pelapor }}</td>
-                <td style="font-weight:600">{{ l.nama_barang }}</td>
-                <td><span class="badge badge-warning" style="font-size:0.72rem">{{ l.jenis_masalah }}</span></td>
-                <td style="max-width:180px;font-size:0.8rem">{{ l.deskripsi[:80] }}{% if l.deskripsi|length > 80 %}...{% endif %}</td>
+                <td style="font-size:0.85rem">{{ l.nama_pelapor }}</td>
+                <td style="font-weight:600;font-size:0.85rem">{{ l.nama_barang }}</td>
+                <td>
+                    {% if l.kategori_kerusakan == 'Ringan' %}<span style="color:#2e7d32;font-weight:700;font-size:0.78rem">🟢 Ringan</span>
+                    {% elif l.kategori_kerusakan == 'Sedang' %}<span style="color:#f57f17;font-weight:700;font-size:0.78rem">🟡 Sedang</span>
+                    {% elif l.kategori_kerusakan == 'Berat' %}<span style="color:#c62828;font-weight:700;font-size:0.78rem">🔴 Berat</span>
+                    {% else %}—{% endif %}
+                </td>
+                <td style="font-size:0.78rem;max-width:120px">{{ l.jenis_masalah }}</td>
                 <td>
                     {% if l.foto_bukti %}
                     <a href="{{ l.foto_bukti | foto_src }}" target="_blank" class="btn btn-sm btn-outline" style="font-size:0.75rem"><i class="fas fa-image"></i></a>
                     {% else %}—{% endif %}
                 </td>
                 <td>
-                    {% if l.status == 'menunggu' %}<span class="badge badge-warning">Menunggu</span>
-                    {% elif l.status == 'selesai' %}<span class="badge badge-success">Selesai</span>
-                    {% else %}<span class="badge badge-secondary">{{ l.status }}</span>{% endif %}
+                    <span class="status-badge s-{{ l.status }}">
+                        {% if l.status == 'menunggu_validasi' %}⏳ Validasi Foto
+                        {% elif l.status == 'menunggu_harga' %}💰 Tunggu Nominal
+                        {% elif l.status == 'menunggu_review' %}🔍 Review Nominal
+                        {% elif l.status == 'selesai' %}✅ Selesai
+                        {% elif l.status == 'ditolak' %}❌ Ditolak
+                        {% elif l.status == 'ditolak_nominal' %}❌ Nominal Ditolak
+                        {% else %}{{ l.status }}{% endif %}
+                    </span>
+                </td>
+                <td style="font-size:0.78rem">
+                    {% if l.total_tagihan %}
+                    <div style="font-weight:700;color:var(--danger)">Rp {{ "{:,.0f}".format(l.total_tagihan) }}</div>
+                    <div style="color:var(--text-muted);font-size:0.72rem">Pemilik terima: Rp {{ "{:,.0f}".format(l.nominal_pemilik) }}</div>
+                    {% else %}—{% endif %}
                 </td>
                 <td style="font-size:0.78rem;white-space:nowrap">{{ l.created_at | tgl }}</td>
                 <td>
-                    {% if l.status == 'menunggu' %}
-                    <button class="btn btn-primary btn-sm" onclick="openModal({{ l.id }})"><i class="fas fa-gavel"></i> Putuskan</button>
+                    {% if l.status == 'menunggu_validasi' %}
+                    <button class="btn btn-primary btn-sm" onclick="openValidasi({{ l.id }}, '{{ l.nama_barang }}', '{{ l.foto_bukti or '' }}', '{{ l.foto_serah or '' }}', '{{ l.foto_terima or '' }}', '{{ l.deskripsi|replace("'","") }}')">
+                        <i class="fas fa-search"></i> Validasi
+                    </button>
+                    {% elif l.status == 'menunggu_review' %}
+                    <button class="btn btn-warning btn-sm" onclick="openReview({{ l.id }}, '{{ l.nama_barang }}', {{ l.nominal_pemilik or 0 }}, {{ l.potongan_platform or 0 }}, {{ l.total_tagihan or 0 }}, '{{ l.kategori_kerusakan }}', '{{ l.foto_serah or '' }}', '{{ l.foto_terima or '' }}')">
+                        <i class="fas fa-gavel"></i> Review
+                    </button>
+                    {% elif l.status == 'menunggu_harga' %}
+                    <span style="font-size:0.75rem;color:var(--text-muted)">Menunggu pemilik</span>
                     {% else %}
-                    <div style="font-size:0.75rem;color:var(--text-muted);max-width:120px">
-                        {{ l.keputusan or '—' }}
-                        {% if l.nominal_denda %}
-                        <div style="margin-top:0.2rem;color:var(--primary)">Denda: Rp {{ "{:,.0f}".format(l.nominal_denda) }}</div>
-                        <div>Pemilik terima: Rp {{ "{:,.0f}".format(l.pemilik_terima) }}</div>
-                        {% endif %}
-                    </div>
+                    <span style="font-size:0.72rem;color:var(--text-muted)">{{ l.keputusan or '—' }}</span>
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
             {% if not laporan %}
-            <tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted)">Belum ada laporan denda.</td></tr>
+            <tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted)">Belum ada laporan denda.</td></tr>
             {% endif %}
         </tbody>
     </table>
 </div>
 
-<!-- MODAL KEPUTUSAN -->
-<div class="modal-overlay" id="modalOverlay">
+<!-- MODAL VALIDASI FOTO -->
+<div class="modal-overlay" id="modalValidasi">
     <div class="modal">
-        <h3><i class="fas fa-gavel" style="color:var(--primary)"></i> Putuskan Laporan Denda</h3>
-        <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:1rem">Keputusan ini akan dikirim sebagai notifikasi ke pemilik dan peminjam.</p>
-        <form method="post" id="modalForm">
+        <h3><i class="fas fa-search" style="color:var(--primary)"></i> Validasi Laporan</h3>
+        <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:1rem">Cek foto kondisi barang dan tentukan apakah kerusakan terbukti terjadi saat dipinjam.</p>
+        <div class="foto-compare">
+            <div class="foto-box">
+                <div class="label">📸 Sebelum Dipinjam</div>
+                <div id="v_foto_serah_wrap"><div class="nofoto">Tidak tersedia</div></div>
+            </div>
+            <div class="foto-box">
+                <div class="label">📸 Setelah Dikembalikan</div>
+                <div id="v_foto_terima_wrap"><div class="nofoto">Tidak tersedia</div></div>
+            </div>
+        </div>
+        <div id="v_foto_bukti_wrap" style="margin-bottom:1rem;display:none">
+            <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:0.3rem">FOTO BUKTI DARI PEMILIK</div>
+            <img id="v_foto_bukti" src="" style="width:100%;max-height:150px;object-fit:cover;border-radius:6px">
+        </div>
+        <div style="background:var(--bg);border-radius:6px;padding:0.75rem;margin-bottom:1rem;font-size:0.83rem" id="v_deskripsi"></div>
+        <form method="post" id="formValidasi">
             <div class="form-group">
-                <label>Keputusan Admin</label>
-                <div class="radio-row">
-                    <label><input type="radio" name="keputusan" value="Denda disetujui — Peminjam wajib membayar ganti rugi" required> ✅ Denda disetujui — Peminjam wajib membayar ganti rugi</label>
-                    <label><input type="radio" name="keputusan" value="Denda ditolak — Kerusakan dianggap wajar/normal"> ❌ Denda ditolak — Kerusakan wajar/normal</label>
-                    <label><input type="radio" name="keputusan" value="Denda sebagian — Perlu negosiasi lebih lanjut"> ⚖️ Denda sebagian — Perlu negosiasi</label>
+                <label>Keputusan</label>
+                <div style="display:flex;flex-direction:column;gap:0.5rem">
+                    <label style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.88rem">
+                        <input type="radio" name="aksi" value="setuju" required> ✅ Setuju — kerusakan terbukti, lanjut ke pemilik untuk input nominal
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.88rem">
+                        <input type="radio" name="aksi" value="tolak"> ❌ Tolak — foto tidak jelas / kerusakan sudah ada sebelumnya
+                    </label>
                 </div>
             </div>
-
-            <!-- NOMINAL DENDA (muncul kalau disetujui/sebagian) -->
-            <div class="form-group" id="nominal_group" style="display:none">
-                <label>Nominal Denda (Rp)</label>
-                <input type="number" name="nominal_denda" id="nominal_denda" class="form-control" min="0" placeholder="Contoh: 150000" style="margin-top:0.4rem">
-                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">
-                    Platform ambil: ≤Rp100rb → 20% &nbsp;|&nbsp; ≤Rp500rb → 25% &nbsp;|&nbsp; >Rp500rb → 30%
-                </div>
-                <div id="rincian_denda" style="display:none;margin-top:0.6rem;background:var(--bg);border-radius:6px;padding:0.7rem;font-size:0.82rem">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem"><span>Nominal denda</span><span id="d_nominal">—</span></div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;color:var(--danger)"><span>Potongan platform</span><span id="d_potongan">—</span></div>
-                    <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--primary)"><span>Pemilik terima</span><span id="d_terima">—</span></div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Catatan Tambahan (opsional)</label>
-                <textarea name="catatan" class="form-control" rows="2" placeholder="Penjelasan singkat keputusan..."></textarea>
+            <div class="form-group" id="alasan_group" style="display:none">
+                <label>Alasan Penolakan</label>
+                <textarea name="alasan_tolak" class="form-control" rows="2" placeholder="Jelaskan alasan penolakan..."></textarea>
             </div>
             <div style="display:flex;gap:0.7rem">
-                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center"><i class="fas fa-gavel"></i> Kirim Keputusan</button>
-                <button type="button" class="btn btn-outline" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center"><i class="fas fa-check"></i> Kirim Keputusan</button>
+                <button type="button" class="btn btn-outline" onclick="closeAll()">Batal</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL REVIEW NOMINAL -->
+<div class="modal-overlay" id="modalReview">
+    <div class="modal">
+        <h3><i class="fas fa-gavel" style="color:var(--warning, #f57f17)"></i> Review Nominal Denda</h3>
+        <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:1rem">Periksa apakah nominal yang diajukan pemilik wajar untuk jenis kerusakan ini.</p>
+        <div class="foto-compare">
+            <div class="foto-box">
+                <div class="label">📸 Sebelum Dipinjam</div>
+                <div id="r_foto_serah_wrap"><div class="nofoto">Tidak tersedia</div></div>
+            </div>
+            <div class="foto-box">
+                <div class="label">📸 Setelah Dikembalikan</div>
+                <div id="r_foto_terima_wrap"><div class="nofoto">Tidak tersedia</div></div>
+            </div>
+        </div>
+        <div id="r_rincian" style="background:var(--bg);border-radius:6px;padding:0.9rem;margin-bottom:1rem;font-size:0.85rem"></div>
+        <form method="post" id="formReview">
+            <div class="form-group">
+                <label>Keputusan Akhir</label>
+                <div style="display:flex;flex-direction:column;gap:0.5rem">
+                    <label style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.88rem">
+                        <input type="radio" name="aksi" value="setuju" required> ✅ Setuju — nominal wajar, denda resmi diterbitkan
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:0.88rem">
+                        <input type="radio" name="aksi" value="tolak"> ❌ Tolak — nominal terlalu tinggi / tidak wajar
+                    </label>
+                </div>
+            </div>
+            <div class="form-group" id="alasan_review_group" style="display:none">
+                <label>Alasan Penolakan</label>
+                <textarea name="alasan_tolak" class="form-control" rows="2" placeholder="Jelaskan mengapa nominal tidak wajar..."></textarea>
+            </div>
+            <div style="display:flex;gap:0.7rem">
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center"><i class="fas fa-gavel"></i> Kirim Keputusan Akhir</button>
+                <button type="button" class="btn btn-outline" onclick="closeAll()">Batal</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-function openModal(id) {
-    document.getElementById('modalForm').action = '/admin/selesaikan_laporan/' + id;
-    // Reset form
-    document.getElementById('modalForm').reset();
-    document.getElementById('nominal_group').style.display = 'none';
-    document.getElementById('rincian_denda').style.display = 'none';
-    document.getElementById('modalOverlay').classList.add('active');
+function fotoOrEmpty(url, wrapperId) {
+    const wrap = document.getElementById(wrapperId);
+    if (url && url !== 'None' && url !== '') {
+        const src = url.startsWith('http') ? url : '/static/images/uploads/' + url;
+        wrap.innerHTML = `<img src="${src}" style="width:100%;height:130px;object-fit:cover;display:block">`;
+    } else {
+        wrap.innerHTML = '<div class="nofoto">Tidak tersedia</div>';
+    }
 }
-function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
+
+function openValidasi(id, nama, fotoBukti, fotoSerah, fotoTerima, deskripsi) {
+    document.getElementById('formValidasi').action = '/admin/validasi_laporan/' + id;
+    document.getElementById('formValidasi').reset();
+    document.getElementById('alasan_group').style.display = 'none';
+    fotoOrEmpty(fotoSerah, 'v_foto_serah_wrap');
+    fotoOrEmpty(fotoTerima, 'v_foto_terima_wrap');
+    if (fotoBukti && fotoBukti !== 'None' && fotoBukti !== '') {
+        const src = fotoBukti.startsWith('http') ? fotoBukti : '/static/images/uploads/' + fotoBukti;
+        document.getElementById('v_foto_bukti').src = src;
+        document.getElementById('v_foto_bukti_wrap').style.display = 'block';
+    } else {
+        document.getElementById('v_foto_bukti_wrap').style.display = 'none';
+    }
+    document.getElementById('v_deskripsi').textContent = deskripsi || '—';
+    document.getElementById('modalValidasi').classList.add('active');
 }
-document.getElementById('modalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeModal();
+
+function openReview(id, nama, nominal, potongan, total, kategori, fotoSerah, fotoTerima) {
+    document.getElementById('formReview').action = '/admin/review_denda/' + id;
+    document.getElementById('formReview').reset();
+    document.getElementById('alasan_review_group').style.display = 'none';
+    fotoOrEmpty(fotoSerah, 'r_foto_serah_wrap');
+    fotoOrEmpty(fotoTerima, 'r_foto_terima_wrap');
+    const katWarna = kategori === 'Ringan' ? '#2e7d32' : kategori === 'Sedang' ? '#f57f17' : '#c62828';
+    document.getElementById('r_rincian').innerHTML = `
+        <div style="margin-bottom:0.4rem"><strong>Kategori:</strong> <span style="color:${katWarna};font-weight:700">${kategori}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem"><span>Biaya perbaikan pemilik</span><span>Rp ${nominal.toLocaleString('id-ID')}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;color:#c62828"><span>Fee platform</span><span>Rp ${potongan.toLocaleString('id-ID')}</span></div>
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1rem;color:var(--primary);padding-top:0.4rem;border-top:1px solid var(--border)"><span>Total tagihan peminjam</span><span>Rp ${total.toLocaleString('id-ID')}</span></div>
+    `;
+    document.getElementById('modalReview').classList.add('active');
+}
+
+function closeAll() {
+    document.getElementById('modalValidasi').classList.remove('active');
+    document.getElementById('modalReview').classList.remove('active');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) { if (e.target === this) closeAll(); });
 });
 
-// Tampilkan input nominal denda kalau keputusan disetujui atau sebagian
-document.querySelectorAll('input[name=keputusan]').forEach(r => {
+document.querySelectorAll('input[name=aksi]').forEach(r => {
     r.addEventListener('change', function() {
-        const group = document.getElementById('nominal_group');
-        const tampil = this.value.includes('disetujui') || this.value.includes('sebagian');
-        group.style.display = tampil ? 'block' : 'none';
-        if (!tampil) {
-            document.getElementById('rincian_denda').style.display = 'none';
-            document.getElementById('nominal_denda').value = '';
-        }
+        const form = this.closest('form');
+        const alasanId = form.id === 'formValidasi' ? 'alasan_group' : 'alasan_review_group';
+        document.getElementById(alasanId).style.display = this.value === 'tolak' ? 'block' : 'none';
     });
-});
-
-// Hitung otomatis potongan platform
-document.getElementById('nominal_denda').addEventListener('input', function() {
-    const nominal = parseFloat(this.value) || 0;
-    const rincian = document.getElementById('rincian_denda');
-    if (nominal <= 0) { rincian.style.display = 'none'; return; }
-    const pct = nominal <= 100000 ? 0.20 : nominal <= 500000 ? 0.25 : 0.30;
-    const potongan = Math.round(nominal * pct);
-    const terima = nominal - potongan;
-    document.getElementById('d_nominal').textContent = 'Rp ' + nominal.toLocaleString('id-ID');
-    document.getElementById('d_potongan').textContent = 'Rp ' + potongan.toLocaleString('id-ID') + ' (' + (pct*100) + '%)';
-    document.getElementById('d_terima').textContent = 'Rp ' + terima.toLocaleString('id-ID');
-    rincian.style.display = 'block';
 });
 </script>
 

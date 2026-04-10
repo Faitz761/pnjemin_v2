@@ -52,6 +52,34 @@
     </div>
     {% endif %}
 
+<!-- NOTIFIKASI INPUT NOMINAL DENDA -->
+{% if laporan_tunggu_nominal %}
+<div class="card" style="margin-bottom:1.5rem;border:1px solid #fbbf24">
+    <div class="card-header" style="color:#b45309"><i class="fas fa-coins"></i> Menunggu Input Nominal Denda ({{ laporan_tunggu_nominal|length }})</div>
+    <div class="card-body" style="padding:0.5rem">
+        {% for l in laporan_tunggu_nominal %}
+        <div class="aktif-row">
+            <div>
+                <div style="font-weight:700;font-size:0.88rem">{{ l.nama_barang }}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem">
+                    {{ l.jenis_masalah }} &middot;
+                    {% if l.kategori_kerusakan == 'Ringan' %}<span style="color:#2e7d32;font-weight:700">🟢 Ringan</span>
+                    {% elif l.kategori_kerusakan == 'Sedang' %}<span style="color:#f57f17;font-weight:700">🟡 Sedang</span>
+                    {% else %}<span style="color:#c62828;font-weight:700">🔴 Berat</span>{% endif %}
+                </div>
+                <div style="font-size:0.78rem;color:#b45309;margin-top:0.3rem">
+                    ✅ Admin sudah validasi laporan kamu. Masukkan nominal biaya perbaikan sekarang.
+                </div>
+            </div>
+            <a href="{{ url_for('input_nominal_denda', id_laporan=l.id) }}" class="btn btn-warning btn-sm">
+                <i class="fas fa-coins"></i> Input Nominal
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
     <!-- LAPORAN MASUK DARI PEMINJAM -->
     {% if laporan_masuk %}
     <div class="card" style="margin-bottom:1.5rem;border:1px solid #fca5a5">

@@ -2,6 +2,11 @@
 {% block title %}Riwayat Peminjaman - P-Njemin{% endblock %}
 {% block extra_css %}
 <style>
+.denda-alert { background:#fff0f0;border:1.5px solid #fca5a5;border-radius:var(--radius-sm);padding:1rem 1.2rem;margin-bottom:1rem; }
+.denda-alert-title { font-weight:700;color:#dc2626;font-size:0.9rem;margin-bottom:0.5rem; }
+.denda-rincian { font-size:0.83rem;display:flex;flex-direction:column;gap:0.25rem; }
+.denda-rincian-row { display:flex;justify-content:space-between; }
+.denda-total { display:flex;justify-content:space-between;font-weight:800;color:#dc2626;font-size:1rem;padding-top:0.4rem;border-top:1px solid #fca5a5;margin-top:0.3rem; }
 .riwayat-wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
 .trx-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1rem; box-shadow: var(--shadow); }
 .trx-header { padding: 0.9rem 1.2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--bg); }
@@ -24,6 +29,36 @@
         <h1><i class="fas fa-history" style="color:var(--primary)"></i> Riwayat Peminjaman</h1>
         <p>Semua transaksi peminjaman kamu</p>
     </div>
+
+<!-- TAGIHAN DENDA AKTIF -->
+{% if denda_aktif %}
+<div style="margin-bottom:1.5rem">
+    <div style="font-size:0.85rem;font-weight:700;color:#dc2626;margin-bottom:0.6rem">
+        <i class="fas fa-exclamation-triangle"></i> Tagihan Denda ({{ denda_aktif|length }})
+    </div>
+    {% for d in denda_aktif %}
+    <div class="denda-alert">
+        <div class="denda-alert-title">⚠️ Denda untuk: {{ d.nama_barang }}</div>
+        <div class="denda-rincian">
+            <div class="denda-rincian-row"><span>Jenis kerusakan</span><span>{{ d.jenis_masalah }}</span></div>
+            <div class="denda-rincian-row"><span>Kategori</span>
+                <span>
+                    {% if d.kategori_kerusakan == 'Ringan' %}🟢 Ringan
+                    {% elif d.kategori_kerusakan == 'Sedang' %}🟡 Sedang
+                    {% else %}🔴 Berat{% endif %}
+                </span>
+            </div>
+            <div class="denda-rincian-row"><span>Biaya perbaikan pemilik</span><span>Rp {{ "{:,.0f}".format(d.nominal_pemilik) }}</span></div>
+            <div class="denda-rincian-row" style="color:#dc2626"><span>Fee platform</span><span>Rp {{ "{:,.0f}".format(d.potongan_platform) }}</span></div>
+            <div class="denda-total"><span>Total yang harus dibayar</span><span>Rp {{ "{:,.0f}".format(d.total_tagihan) }}</span></div>
+        </div>
+        <div style="margin-top:0.75rem;font-size:0.78rem;color:#7f1d1d;background:#fee2e2;border-radius:6px;padding:0.5rem 0.75rem">
+            ⏳ Segera lunasi denda ini. Akun kamu akan dibekukan otomatis jika tidak dibayar dalam 2x24 jam.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
     {% if transaksi %}
     {% for t in transaksi %}
