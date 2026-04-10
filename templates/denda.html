@@ -1,46 +1,154 @@
 {% extends 'base.html' %}
 {% block title %}Laporkan Denda - P-Njemin{% endblock %}
+{% block extra_css %}
+<style>
+.denda-wrap { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+.foto-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.foto-compare-box { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.foto-compare-box .label { font-size: 0.75rem; font-weight: 700; padding: 0.4rem 0.7rem; background: var(--bg); color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.foto-compare-box img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.foto-compare-box .no-foto { height: 160px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.82rem; background: var(--bg); }
+.kategori-badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+.kategori-ringan { background: #e8f5e9; color: #2e7d32; }
+.kategori-sedang { background: #fff8e1; color: #f57f17; }
+.kategori-berat { background: #ffebee; color: #c62828; }
+.kalkulasi-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-top: 0.75rem; font-size: 0.85rem; }
+.kalkulasi-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; color: var(--text-muted); }
+.kalkulasi-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 1rem; color: var(--primary); padding-top: 0.5rem; border-top: 1px solid var(--border); margin-top: 0.35rem; }
+</style>
+{% endblock %}
 {% block content %}
-<div style="max-width:520px;margin:0 auto;padding:1.5rem">
+<div class="denda-wrap">
     <a href="{{ url_for('barang_saya') }}" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;margin-bottom:1rem">
         <i class="fas fa-arrow-left"></i> Kembali
     </a>
     <div class="card">
-        <div class="card-header" style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i> Laporkan Kerusakan / Denda</div>
+        <div class="card-header" style="color:var(--danger)">
+            <i class="fas fa-exclamation-triangle"></i> Laporkan Kerusakan / Denda
+        </div>
         <div class="card-body">
+            <!-- Info transaksi -->
             <div style="background:#fff3ee;border:1px solid var(--primary);border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1.2rem;font-size:0.88rem">
                 <strong>Transaksi #TRX{{ '%04d'|format(transaksi.id) }}</strong> &mdash; {{ transaksi.nama_barang }}
-                <div style="color:var(--text-muted);font-size:0.78rem;margin-top:0.2rem">Peminjam: {{ transaksi.nama_peminjam if transaksi.nama_peminjam is defined else '—' }}</div>
+                <div style="color:var(--text-muted);font-size:0.78rem;margin-top:0.2rem">Peminjam: {{ transaksi.nama_peminjam or '—' }}</div>
             </div>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.2rem">
-                Laporkan jika barang dikembalikan dalam kondisi rusak atau ada masalah lainnya. Admin akan menindaklanjuti laporan ini.
-            </p>
+
+            <!-- Perbandingan foto side-by-side -->
+            <div style="font-size:0.82rem;font-weight:700;color:var(--text-muted);margin-bottom:0.5rem">PERBANDINGAN KONDISI BARANG</div>
+            <div class="foto-compare">
+                <div class="foto-compare-box">
+                    <div class="label">📸 Sebelum Dipinjam</div>
+                    {% if foto_serah %}
+                    <img src="{{ foto_serah | foto_src }}" alt="Kondisi awal">
+                    {% else %}
+                    <div class="no-foto"><i class="fas fa-image"></i>&nbsp; Foto tidak tersedia</div>
+                    {% endif %}
+                </div>
+                <div class="foto-compare-box">
+                    <div class="label">📸 Setelah Dikembalikan</div>
+                    {% if foto_terima %}
+                    <img src="{{ foto_terima | foto_src }}" alt="Kondisi akhir">
+                    {% else %}
+                    <div class="no-foto"><i class="fas fa-image"></i>&nbsp; Foto tidak tersedia</div>
+                    {% endif %}
+                </div>
+            </div>
+
             <form method="post" enctype="multipart/form-data">
+                <!-- Jenis masalah -->
                 <div class="form-group">
                     <label><i class="fas fa-exclamation-circle"></i> Jenis Masalah</label>
                     <div style="display:grid;gap:0.5rem;margin-top:0.4rem">
-                        {% for jenis in ['Barang Rusak','Barang Hilang','Barang Tidak Dikembalikan','Lainnya'] %}
-                        <label style="display:flex;align-items:center;gap:0.6rem;padding:0.65rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88rem;font-weight:600;transition:all 0.2s">
+                        {% for jenis in ['Lecet/Baret ringan','Komponen rusak/pecah','Barang Hilang','Barang Tidak Dikembalikan','Kerusakan Fatal/Total','Lainnya'] %}
+                        <label style="display:flex;align-items:center;gap:0.6rem;padding:0.65rem 0.9rem;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:0.88rem;font-weight:600;transition:all 0.2s" onclick="updateKategori(this)">
                             <input type="radio" name="jenis_masalah" value="{{ jenis }}" {% if loop.first %}checked{% endif %} style="accent-color:var(--danger)">
                             {{ jenis }}
                         </label>
                         {% endfor %}
                     </div>
+                    <!-- Rekomendasi kategori otomatis -->
+                    <div style="margin-top:0.6rem;font-size:0.82rem">
+                        Kategori otomatis: <span id="badge_kategori" class="kategori-badge kategori-ringan">Ringan</span>
+                        <span style="color:var(--text-muted);margin-left:0.3rem">(ditentukan sistem)</span>
+                    </div>
                 </div>
+
+                <!-- Deskripsi -->
                 <div class="form-group">
                     <label><i class="fas fa-align-left"></i> Deskripsi Kerusakan</label>
-                    <textarea name="deskripsi" class="form-control" rows="4" placeholder="Jelaskan kondisi kerusakan secara detail..." required></textarea>
+                    <textarea name="deskripsi" class="form-control" rows="3" placeholder="Jelaskan kondisi kerusakan secara detail..." required style="resize:none;margin-top:0.4rem"></textarea>
                 </div>
+
+                <!-- Nominal perbaikan -->
                 <div class="form-group">
-                    <label><i class="fas fa-image"></i> Foto Bukti Kerusakan</label>
-                    <input type="file" name="foto_bukti" class="form-control" accept="image/*">
-                    <small style="color:var(--text-muted);font-size:0.78rem">Upload foto kondisi barang setelah dikembalikan</small>
+                    <label><i class="fas fa-coins"></i> Biaya Perbaikan yang Diminta (Rp)</label>
+                    <div style="position:relative;margin-top:0.4rem">
+                        <span style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);font-weight:600;color:var(--text-muted);font-size:0.88rem">Rp</span>
+                        <input type="number" name="nominal_perbaikan" id="nominal_perbaikan" class="form-control" style="padding-left:2.5rem" placeholder="0" min="0" oninput="hitungTotal()">
+                    </div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Masukkan estimasi biaya perbaikan. Sistem akan menghitung fee platform otomatis.</div>
+
+                    <!-- Kalkulasi otomatis -->
+                    <div class="kalkulasi-box" id="kalkulasi_box" style="display:none">
+                        <div class="kalkulasi-row"><span>Biaya perbaikan (kamu terima)</span><span id="k_nominal">—</span></div>
+                        <div class="kalkulasi-row"><span id="k_pct_label">Fee platform</span><span id="k_fee">—</span></div>
+                        <div class="kalkulasi-total"><span>Total tagihan peminjam</span><span id="k_total">—</span></div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center">
+
+                <!-- Foto bukti -->
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Foto Bukti Kerusakan Tambahan <span style="font-weight:400;color:var(--text-muted)">(opsional)</span></label>
+                    <input type="file" name="foto_bukti" class="form-control" accept="image/*" style="margin-top:0.4rem">
+                </div>
+
+                <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center;margin-top:0.5rem">
                     <i class="fas fa-paper-plane"></i> Kirim Laporan Denda
                 </button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+const kategoriBadge = document.getElementById('badge_kategori');
+
+function updateKategori(label) {
+    const jenis = label.querySelector('input').value.toLowerCase();
+    let kat, cls;
+    if (jenis.includes('lecet') || jenis.includes('baret') || jenis.includes('ringan')) {
+        kat = 'Ringan'; cls = 'kategori-ringan';
+    } else if (jenis.includes('komponen') || jenis.includes('rusak') || jenis.includes('pecah')) {
+        kat = 'Sedang'; cls = 'kategori-sedang';
+    } else {
+        kat = 'Berat'; cls = 'kategori-berat';
+    }
+    kategoriBadge.textContent = kat;
+    kategoriBadge.className = 'kategori-badge ' + cls;
+}
+
+function hitungTotal() {
+    const nominal = parseFloat(document.getElementById('nominal_perbaikan').value) || 0;
+    const box = document.getElementById('kalkulasi_box');
+    if (nominal <= 0) { box.style.display = 'none'; return; }
+
+    const tabel = [
+        [100000,4],[500000,6],[1000000,8],[2000000,10],
+        [3000000,12],[5000000,14],[7500000,16],[10000000,18],
+        [12500000,20],[15000000,22],[17500000,24],[20000000,26]
+    ];
+    let pct = 30;
+    for (const [batas, p] of tabel) {
+        if (nominal < batas) { pct = p; break; }
+    }
+    const fee = Math.round(nominal * pct / 100);
+    const total = nominal + fee;
+
+    document.getElementById('k_nominal').textContent = 'Rp ' + nominal.toLocaleString('id-ID');
+    document.getElementById('k_pct_label').textContent = `Fee platform (${pct}%)`;
+    document.getElementById('k_fee').textContent = 'Rp ' + fee.toLocaleString('id-ID');
+    document.getElementById('k_total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    box.style.display = 'block';
+}
+</script>
 {% endblock %}

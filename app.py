@@ -335,33 +335,61 @@ def init_db():
 
     db_executescript(sql)
 
-# Migrasi: tambah kolom checkin jika belum ada
+# ── Migrasi kolom baru ──
+    migrasi_transaksi = [
+        ('foto_checkin','TEXT'), ('checkin_status','TEXT'),
+        ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP'),
+        ('denda_status','TEXT'), ('denda_due','TIMESTAMP'),
+    ]
+    migrasi_laporan = [
+        ('nominal_denda','REAL'), ('potongan_platform','REAL'),
+        ('pemilik_terima','REAL'), ('total_tagihan','REAL'),
+        ('kategori_kerusakan','TEXT'), ('status_validasi','TEXT'),
+        ('alasan_tolak','TEXT'), ('nominal_pemilik','REAL'),
+    ]
     if USE_POSTGRES:
-        for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
-            try:
-                db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
+        for col, defval in migrasi_transaksi:
+            try: db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
+            except: pass
+        for col, defval in migrasi_laporan:
+            try: db_execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}", commit=True)
             except: pass
     else:
         conn = get_db()
         c = conn.cursor()
-        for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
-            try:
-                c.execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}")
+        for col, defval in migrasi_transaksi + migrasi_laporan:
+            tabel = 'transaksi' if col in [x for x,_ in migrasi_transaksi] else 'laporan'
+            try: c.execute(f"ALTER TABLE {tabel} ADD COLUMN {col} {defval}")
             except: pass
         conn.commit()
 
-for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
-    try:
-        db_execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}", commit=True) if USE_POSTGRES else None
-    except: pass
-if not USE_POSTGRES:
-    conn = get_db()
-    c = conn.cursor()
-    for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
-        try:
-            c.execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}")
-        except: pass
-    conn.commit()
+# Migrasi: tambah kolom checkin jika belum ada
+  #  if USE_POSTGRES:
+  #      for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
+  #          try:
+      #          db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
+     #       except: pass
+    #else:
+      #  conn = get_db()
+      #  c = conn.cursor()
+     #   for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
+    #        try:
+   #             c.execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}")
+  #          except: pass
+ #       conn.commit()
+
+#for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
+  #  try:
+   #     db_execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}", commit=True) if USE_POSTGRES else None
+  #  except: pass
+#if not USE_POSTGRES:
+   # conn = get_db()
+  #  c = conn.cursor()
+   # for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
+   #     try:
+  #          c.execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}")
+  #      except: pass
+  #  conn.commit()
 
     # Buat admin jika belum ada
     existing = db_execute("SELECT id FROM users WHERE email='admin@pnjemin.com'", fetchone=True)
@@ -839,22 +867,66 @@ def respon_laporan(id_laporan):
     flash('Respon berhasil dikirim ke peminjam!','success')
     return redirect(url_for('barang_saya'))
 
+def hitung_fee_denda(nominal):
+    tabel = [
+        (100000, 0.04), (500000, 0.06), (1000000, 0.08),
+        (2000000, 0.10), (3000000, 0.12), (5000000, 0.14),
+        (7500000, 0.16), (10000000, 0.18), (12500000, 0.20),
+        (15000000, 0.22), (17500000, 0.24), (20000000, 0.26),
+    ]
+    for batas, pct in tabel:
+        if nominal < batas:
+            return pct
+    return 0.30
+
+def kategori_dari_jenis(jenis):
+    jenis = jenis.lower()
+    if any(k in jenis for k in ['lecet','kotor','baret','kusut','noda']):
+        return 'Ringan'
+    elif any(k in jenis for k in ['rusak','pecah','bocor','patah','komponen','servis']):
+        return 'Sedang'
+    elif any(k in jenis for k in ['hilang','hancur','mati','fatal','tidak kembali','total']):
+        return 'Berat'
+    return 'Sedang'
+
 @app.route('/denda/<int:id_transaksi>', methods=['GET','POST'])
 def denda(id_transaksi):
     if 'user_id' not in session: return redirect(url_for('login'))
-    transaksi = db_execute("SELECT t.*,b.nama_barang,b.id_pemilik FROM transaksi t JOIN barang b ON t.id_barang=b.id WHERE t.id=?",(id_transaksi,), fetchone=True)
-    if not transaksi or transaksi['id_pemilik'] != session['user_id']: return redirect(url_for('barang_saya'))
+    transaksi = db_execute("""
+        SELECT t.*,b.nama_barang,b.id_pemilik,u.nama as nama_peminjam
+        FROM transaksi t JOIN barang b ON t.id_barang=b.id
+        JOIN users u ON t.id_user=u.id
+        WHERE t.id=?
+    """, (id_transaksi,), fetchone=True)
+    if not transaksi or transaksi['id_pemilik'] != session['user_id']:
+        return redirect(url_for('barang_saya'))
     if transaksi['status'] != 'selesai':
         flash('Laporan denda hanya bisa diajukan setelah transaksi selesai.','error')
         return redirect(url_for('barang_saya'))
     if request.method == 'POST':
-        jenis,deskripsi = request.form['jenis_masalah'],request.form['deskripsi']
+        jenis = request.form['jenis_masalah']
+        deskripsi = request.form['deskripsi']
+        nominal_pemilik = float(request.form.get('nominal_perbaikan', 0) or 0)
         foto = save_foto(request.files.get('foto_bukti'), f'denda_{id_transaksi}')
-        db_execute("INSERT INTO laporan (id_pelapor,id_transaksi,jenis_masalah,deskripsi,foto_bukti,tipe_pelapor) VALUES (?,?,?,?,?,'pemilik')",(session['user_id'],id_transaksi,jenis,deskripsi,foto), commit=True)
-        add_notif(transaksi['id_user'],f"Pemilik melaporkan kerusakan pada '{transaksi['nama_barang']}'.")
-        flash('Laporan denda dikirim!','success')
+        kategori = kategori_dari_jenis(jenis)
+        pct = hitung_fee_denda(nominal_pemilik)
+        total_tagihan = round(nominal_pemilik * (1 + pct)) if nominal_pemilik > 0 else 0
+        potongan = round(nominal_pemilik * pct) if nominal_pemilik > 0 else 0
+        db_execute("""
+            INSERT INTO laporan (id_pelapor,id_transaksi,jenis_masalah,deskripsi,
+                foto_bukti,tipe_pelapor,kategori_kerusakan,nominal_pemilik,
+                potongan_platform,total_tagihan,status_validasi)
+            VALUES (?,?,?,?,?,'pemilik',?,?,?,?,'menunggu_validasi')
+        """, (session['user_id'],id_transaksi,jenis,deskripsi,foto,
+              kategori,nominal_pemilik,potongan,total_tagihan), commit=True)
+        add_notif(transaksi['id_user'], f"Pemilik melaporkan kerusakan pada '{transaksi['nama_barang']}'. Menunggu validasi admin.")
+        flash('Laporan denda dikirim! Menunggu validasi admin.','success')
         return redirect(url_for('barang_saya'))
-    return render_template('denda.html', transaksi=transaksi, notif_count=notif_count())
+    foto_serah = transaksi.get('foto_serah')
+    foto_terima = transaksi.get('foto_terima')
+    return render_template('denda.html', transaksi=transaksi,
+                           foto_serah=foto_serah, foto_terima=foto_terima,
+                           notif_count=notif_count())
 
 @app.route('/review_peminjam/<int:id_transaksi>', methods=['GET','POST'])
 def review_peminjam(id_transaksi):
@@ -996,11 +1068,33 @@ def admin_laporan():
 def admin_selesaikan_laporan(id):
     if session.get('role') != 'admin': return redirect(url_for('admin_login'))
     keputusan = request.form['keputusan']
+    nominal_denda = float(request.form.get('nominal_denda', 0) or 0)
     l = db_execute("SELECT l.*,t.id_user,b.nama_barang,b.id_pemilik FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id JOIN barang b ON t.id_barang=b.id WHERE l.id=?",(id,), fetchone=True)
-    db_execute("UPDATE laporan SET status='selesai',keputusan=? WHERE id=?",(keputusan,id), commit=True)
-    add_notif(l['id_user'],f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}")
-    add_notif(l['id_pemilik'],f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}")
-    flash('Laporan diselesaikan!','success')
+
+    potongan = 0
+    pemilik_terima = 0
+    if nominal_denda > 0:
+        # Hitung persentase potongan berdasarkan nominal denda
+        if nominal_denda <= 100000:
+            pct = 0.20
+        elif nominal_denda <= 500000:
+            pct = 0.25
+        else:
+            pct = 0.30
+        potongan = round(nominal_denda * pct)
+        pemilik_terima = nominal_denda - potongan
+
+    db_execute("UPDATE laporan SET status='selesai', keputusan=?, nominal_denda=?, potongan_platform=?, pemilik_terima=? WHERE id=?",
+               (keputusan, nominal_denda, potongan, pemilik_terima, id), commit=True)
+
+    if nominal_denda > 0:
+        add_notif(l['id_user'], f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}. Kamu wajib membayar denda Rp {nominal_denda:,.0f}.")
+        add_notif(l['id_pemilik'], f"Laporan denda '{l['nama_barang']}' diputuskan. Kamu akan menerima Rp {pemilik_terima:,.0f} setelah potongan platform.")
+    else:
+        add_notif(l['id_user'], f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}")
+        add_notif(l['id_pemilik'], f"Laporan denda '{l['nama_barang']}' diputuskan: {keputusan}")
+
+    flash('Laporan diselesaikan!', 'success')
     return redirect(url_for('admin_laporan'))
 
 @app.route('/admin/banding')
