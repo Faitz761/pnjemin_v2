@@ -370,6 +370,21 @@ def init_db():
         ('alasan_tolak','TEXT'), ('nominal_pemilik','REAL'),
     ]
     if USE_POSTGRES:
+        kolom_baru = [
+        ("laporan", "total_tagihan", "REAL"),
+        ("laporan", "nominal_pemilik", "REAL"),
+        ("laporan", "potongan_platform", "REAL"),
+        ("laporan", "kategori_kerusakan", "TEXT"),
+        ("laporan", "status_validasi", "TEXT"),
+        ("laporan", "alasan_tolak", "TEXT"),
+        ("transaksi", "denda_status", "TEXT"),
+        ("transaksi", "denda_due", "TIMESTAMP"),
+    ]
+    for tabel, col, tipe in kolom_baru:
+        try:
+            db_execute(f"ALTER TABLE {tabel} ADD COLUMN IF NOT EXISTS {col} {tipe}", commit=True)
+        except: pass
+        
         for col, defval in migrasi_transaksi:
             try: db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
             except: pass
