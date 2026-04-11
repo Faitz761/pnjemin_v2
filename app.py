@@ -649,7 +649,7 @@ def checkin_barang(id_transaksi):
     if 'user_id' not in session: return redirect(url_for('login'))
     if cek_blokir(): return redirect(url_for('akun_diblokir'))
     t = db_execute("""
-        SELECT t.*,b.nama_barang,b.foto_serah,b.foto as foto_barang
+        SELECT t.*,b.nama_barang,t.foto_serah,b.foto as foto_barang
         FROM transaksi t JOIN barang b ON t.id_barang=b.id
         WHERE t.id=? AND t.id_user=?
     """, (id_transaksi, session['user_id']), fetchone=True)
