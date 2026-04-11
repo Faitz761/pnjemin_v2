@@ -384,7 +384,7 @@ def init_db():
         try:
             db_execute(f"ALTER TABLE {tabel} ADD COLUMN IF NOT EXISTS {col} {tipe}", commit=True)
         except: pass
-        
+
         for col, defval in migrasi_transaksi:
             try: db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
             except: pass
@@ -480,7 +480,10 @@ def home():
     search = request.args.get('search','')
     kategori = request.args.get('kategori','')
     if search:
-        barang = db_execute("SELECT b.*,u.nama as nama_pemilik FROM barang b JOIN users u ON b.id_pemilik=u.id WHERE b.nama_barang LIKE ? AND b.status='tersedia' ORDER BY b.total_disewa DESC",(f'%{search}%',), fetchall=True)
+        if USE_POSTGRES:
+            barang = db_execute("SELECT b.*,u.nama as nama_pemilik FROM barang b JOIN users u ON b.id_pemilik=u.id WHERE b.nama_barang ILIKE ? AND b.status='tersedia' ORDER BY b.total_disewa DESC",(f'%{search}%',), fetchall=True)
+        else:
+            barang = db_execute("SELECT b.*,u.nama as nama_pemilik FROM barang b JOIN users u ON b.id_pemilik=u.id WHERE b.nama_barang LIKE ? AND b.status='tersedia' ORDER BY b.total_disewa DESC",(f'%{search}%',), fetchall=True)
     elif kategori:
         barang = db_execute("SELECT b.*,u.nama as nama_pemilik FROM barang b JOIN users u ON b.id_pemilik=u.id WHERE b.kategori=? AND b.status='tersedia' ORDER BY b.total_disewa DESC",(kategori,), fetchall=True)
     else:
