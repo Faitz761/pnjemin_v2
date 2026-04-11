@@ -495,11 +495,25 @@ def register():
     if request.method == 'POST':
         nama,email,password = request.form['nama'],request.form['email'],request.form['password']
         no_hp,alamat,tipe_akun = request.form['no_hp'],request.form['alamat'],request.form['tipe_akun']
+        nik = request.form.get('nik', '').strip() or None
+
         if db_execute("SELECT id FROM users WHERE email=?",(email,), fetchone=True):
             flash('Email sudah terdaftar!','error')
             return redirect(url_for('register'))
-        db_execute("INSERT INTO users (nama,email,password,no_hp,alamat,tipe_akun) VALUES (?,?,?,?,?,?)",
-                   (nama,email,generate_password_hash(password),no_hp,alamat,tipe_akun), commit=True)
+
+        if nik:
+            nik_count = db_execute("SELECT COUNT(*) AS c FROM users WHERE nik=?", (nik,), fetchone=True)
+            jumlah = nik_count['c'] if nik_count else 0
+            if jumlah >= 2:
+                flash('NIK ini sudah digunakan untuk 2 akun. Tidak bisa mendaftar lagi.','error')
+                return redirect(url_for('register'))
+            nik_sama_tipe = db_execute("SELECT id FROM users WHERE nik=? AND tipe_akun=?", (nik, tipe_akun), fetchone=True)
+            if nik_sama_tipe:
+                flash(f'NIK ini sudah digunakan untuk akun {tipe_akun}.','error')
+                return redirect(url_for('register'))
+
+        db_execute("INSERT INTO users (nama,email,password,no_hp,alamat,tipe_akun,nik) VALUES (?,?,?,?,?,?,?)",
+                   (nama,email,generate_password_hash(password),no_hp,alamat,tipe_akun,nik), commit=True)
         flash('Registrasi berhasil! Silakan login.','success')
         return redirect(url_for('login'))
     return render_template('register.html', notif_count=notif_count())
