@@ -80,8 +80,16 @@
                     {% elif l.status == 'menunggu_harga' %}
                     <span style="font-size:0.75rem;color:var(--text-muted)">Menunggu pemilik</span>
                     {% else %}
-                    <span style="font-size:0.72rem;color:var(--text-muted)">{{ l.keputusan or '—' }}</span>
-                    {% endif %}
+                    <div style="font-size:0.72rem;color:var(--text-muted)">{{ l.keputusan or '—' }}</div>
+{% if l.status == 'selesai' and l.status_bayar == 'menunggu_verifikasi' %}
+<form method="post" style="margin-top:0.4rem;display:flex;gap:0.3rem">
+    <button formaction="{{ url_for('admin_verifikasi_denda', id_laporan=l.id) }}" name="aksi" value="lunas" class="btn btn-success btn-sm" style="font-size:0.72rem">✅ Lunas</button>
+    <button formaction="{{ url_for('admin_verifikasi_denda', id_laporan=l.id) }}" name="aksi" value="tolak" class="btn btn-danger btn-sm" style="font-size:0.72rem">❌ Tolak</button>
+</form>
+{% endif %}
+{% if l.bukti_denda %}
+<a href="{{ l.bukti_denda | foto_src }}" target="_blank" style="font-size:0.72rem;color:var(--primary)"><i class="fas fa-image"></i> Lihat Bukti</a>
+{% endif %}
                 </td>
             </tr>
             {% endfor %}

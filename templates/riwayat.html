@@ -52,8 +52,19 @@
             <div class="denda-rincian-row" style="color:#dc2626"><span>Fee platform</span><span>Rp {{ "{:,.0f}".format(d.potongan_platform) }}</span></div>
             <div class="denda-total"><span>Total yang harus dibayar</span><span>Rp {{ "{:,.0f}".format(d.total_tagihan) }}</span></div>
         </div>
-        <div style="margin-top:0.75rem;font-size:0.78rem;color:#7f1d1d;background:#fee2e2;border-radius:6px;padding:0.5rem 0.75rem">
-            ⏳ Segera lunasi denda ini. Akun kamu akan dibekukan otomatis jika tidak dibayar dalam 2x24 jam.
+        <div style="margin-top:0.75rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+            <div style="font-size:0.78rem;color:#7f1d1d;background:#fee2e2;border-radius:6px;padding:0.5rem 0.75rem;flex:1">
+                {% if d.status_bayar == 'menunggu_verifikasi' %}
+                ⏳ Bukti pembayaran sudah dikirim. Menunggu verifikasi admin.
+                {% else %}
+                ⏳ Segera lunasi denda ini. Akun kamu akan dibekukan otomatis jika tidak dibayar dalam 2x24 jam.
+                {% endif %}
+            </div>
+            {% if d.status_bayar != 'menunggu_verifikasi' and d.status_bayar != 'lunas' %}
+            <a href="{{ url_for('bayar_denda', id_laporan=d.id) }}" class="btn btn-danger btn-sm">
+                <i class="fas fa-money-bill-wave"></i> Bayar Sekarang
+            </a>
+            {% endif %}
         </div>
     </div>
     {% endfor %}

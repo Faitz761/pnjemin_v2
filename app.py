@@ -1037,6 +1037,48 @@ def input_nominal_denda(id_laporan):
         return redirect(url_for('barang_saya'))
     return render_template('input_nominal_denda.html', laporan=l, notif_count=notif_count())
 
+@app.route('/bayar_denda/<int:id_laporan>', methods=['GET','POST'])
+def bayar_denda(id_laporan):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    l = db_execute("""
+        SELECT l.*,b.nama_barang
+        FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id
+        JOIN barang b ON t.id_barang=b.id
+        WHERE l.id=? AND t.id_user=?
+    """, (id_laporan, session['user_id']), fetchone=True)
+    if not l: return redirect(url_for('riwayat'))
+    if request.method == 'POST':
+        bukti = save_foto(request.files.get('bukti_bayar'), f'dendabayar_{id_laporan}')
+        if not bukti:
+            flash('Harap upload bukti pembayaran.', 'error')
+            return render_template('bayar_denda.html', laporan=l, notif_count=notif_count())
+        db_execute("UPDATE laporan SET bukti_denda=?, status_bayar='menunggu_verifikasi' WHERE id=?",
+                   (bukti, id_laporan), commit=True)
+        # Notif admin
+        admin = db_execute("SELECT id FROM users WHERE role='admin' LIMIT 1", fetchone=True)
+        if admin:
+            add_notif(admin['id'], f"Ada bukti bayar denda untuk '{l['nama_barang']}'. Segera verifikasi.")
+        flash('Bukti pembayaran dikirim! Menunggu verifikasi admin.', 'success')
+        return redirect(url_for('riwayat'))
+    return render_template('bayar_denda.html', laporan=l, notif_count=notif_count())
+
+@app.route('/admin/verifikasi_denda/<int:id_laporan>', methods=['POST'])
+def admin_verifikasi_denda(id_laporan):
+    if session.get('role') != 'admin': return redirect(url_for('admin_login'))
+    aksi = request.form.get('aksi')
+    l = db_execute("SELECT l.*,t.id_user,b.nama_barang FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id JOIN barang b ON t.id_barang=b.id WHERE l.id=?",
+                   (id_laporan,), fetchone=True)
+    if aksi == 'lunas':
+        db_execute("UPDATE laporan SET status_bayar='lunas' WHERE id=?", (id_laporan,), commit=True)
+        # Cairkan akun kalau dibekukan karena denda ini
+        db_execute("UPDATE users SET status='aktif' WHERE id=? AND status='diblokir'", (l['id_user'],), commit=True)
+        add_notif(l['id_user'], f"✅ Pembayaran denda '{l['nama_barang']}' dikonfirmasi lunas. Akun kamu aktif kembali.")
+    else:
+        db_execute("UPDATE laporan SET status_bayar='ditolak', bukti_denda=NULL WHERE id=?", (id_laporan,), commit=True)
+        add_notif(l['id_user'], f"❌ Bukti bayar denda '{l['nama_barang']}' ditolak. Upload ulang bukti yang valid.")
+    flash('Verifikasi denda selesai.', 'success')
+    return redirect(url_for('admin_laporan'))
+
 @app.route('/review_peminjam/<int:id_transaksi>', methods=['GET','POST'])
 def review_peminjam(id_transaksi):
     if 'user_id' not in session: return redirect(url_for('login'))
