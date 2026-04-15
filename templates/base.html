@@ -245,8 +245,8 @@
 <nav class="navbar">
     <a href="{{ url_for('home') }}" class="navbar-brand">P🤝<span>Njemin</span></a>
     <ul class="navbar-nav">
-        <li><a href="{{ url_for('home') }}" {% if request.endpoint=='home' %}class="active"{% endif %}><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="{{ url_for('home', kategori='Elektronik') }}"><i class="fas fa-th-large"></i> Kategori</a></li>
+        <li><a href="{{ url_for('home') }}" {% if request.endpoint == 'home' and not request.args.get('kategori') %}class="active"{% endif %}><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="{{ url_for('home', kategori='Elektronik') }}" {% if request.args.get('kategori') %}class="active"{% endif %}><i class="fas fa-th-large"></i> Kategori</a></li>
         {% if session.get('user_id') %}
         {% if session.get('tipe_akun') == 'pemilik' %}
         <li><a href="{{ url_for('barang_saya') }}" {% if request.endpoint=='barang_saya' %}class="active"{% endif %}><i class="fas fa-box"></i> Barang Saya</a></li>
