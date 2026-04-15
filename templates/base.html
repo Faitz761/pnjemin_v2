@@ -74,7 +74,11 @@
         }
         .navbar-nav a:hover, .navbar-nav a.active { color: var(--primary); background: var(--primary-light); }
         .navbar-right { display: flex; align-items: center; gap: 0.7rem; margin-left: auto; }
-
+        
+        .nav-item.active {
+            color: var(--primary) !important; /* Warna oranye P-Njemin */
+            font-weight: 600;
+        }
         /* BUTTONS */
         .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
@@ -245,8 +249,15 @@
 <nav class="navbar">
     <a href="{{ url_for('home') }}" class="navbar-brand">P🤝<span>Njemin</span></a>
     <ul class="navbar-nav">
-        <li><a href="{{ url_for('home') }}" {% if request.endpoint=='home' %}class="active"{% endif %}><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="{{ url_for('home', kategori='Elektronik') }}"><i class="fas fa-th-large"></i> Kategori</a></li>
+        <div class="nav-links">
+    <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' and not request.args.get('kategori') %}active{% endif %}">
+        <i class="fas fa-home"></i> Home
+    </a>
+    
+    <a href="{{ url_for('home') }}#kategori-section" class="nav-item {% if request.args.get('kategori') %}active{% endif %}">
+        <i class="fas fa-border-all"></i> Kategori
+    </a>
+</div>
         {% if session.get('user_id') %}
         {% if session.get('tipe_akun') == 'pemilik' %}
         <li><a href="{{ url_for('barang_saya') }}" {% if request.endpoint=='barang_saya' %}class="active"{% endif %}><i class="fas fa-box"></i> Barang Saya</a></li>
