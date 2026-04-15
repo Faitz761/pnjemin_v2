@@ -370,5 +370,28 @@
 </footer>
 
 {% block extra_js %}{% endblock %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Ambil semua menu di navbar
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // 1. Hapus class 'active' (warna oren) dari semua menu
+            navItems.forEach(nav => nav.classList.remove('active'));
+            
+            // 2. Tambahkan class 'active' (warna oren) ke menu yang baru saja diklik
+            this.classList.add('active');
+        });
+    });
+
+    // Tambahan: Mengecek jika dari awal URL-nya sudah ada #kategori-section
+    if (window.location.hash === '#kategori-section') {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        let katBtn = document.querySelector('a[href*="#kategori-section"]');
+        if(katBtn) katBtn.classList.add('active');
+    }
+});
+</script>
 </body>
 </html>
