@@ -853,6 +853,22 @@ def hitung_biaya_upload(harga_sewa):
     elif harga_sewa < 25000000: return round(harga_sewa * 0.10)
     else: return round(harga_sewa * 0.12)
 
+@app.route('/hapus_barang_pemilik/<int:id_barang>', methods=['POST'])
+def hapus_barang_pemilik(id_barang):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    
+    # Cek apakah barang tersebut beneran ada dan milik user yang sedang login
+    cek_barang = db_execute("SELECT id FROM barang WHERE id=? AND id_pemilik=?", (id_barang, session['user_id']), fetchone=True)
+    
+    if cek_barang:
+        # Eksekusi hapus barang
+        db_execute("DELETE FROM barang WHERE id=?", (id_barang,), commit=True)
+        flash('Barang berhasil dihapus secara permanen!', 'success')
+    else:
+        flash('Gagal menghapus! Barang tidak ditemukan atau bukan milikmu.', 'error')
+        
+    return redirect(url_for('barang_saya'))
+
 @app.route('/upload_barang', methods=['GET','POST'])
 def upload_barang():
     if 'user_id' not in session: return redirect(url_for('login'))
