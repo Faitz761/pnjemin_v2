@@ -778,31 +778,25 @@ def pengaturan():
 def barang_saya():
     if 'user_id' not in session: return redirect(url_for('login'))
     if cek_blokir(): return redirect(url_for('akun_diblokir'))
-    
-    # 1. TAMPILKAN BARANG YANG STATUSNYA BUKAN 'dihapus'
-    barang = db_execute("SELECT * FROM barang WHERE id_pemilik=? AND status != 'dihapus' ORDER BY created_at DESC",(session['user_id'],), fetchall=True)
-    
+    barang = db_execute("SELECT * FROM barang WHERE id_pemilik=? ORDER BY created_at DESC",(session['user_id'],), fetchall=True)
     bookings = db_execute("""
         SELECT t.*,b.nama_barang,u.nama as nama_peminjam,u.no_hp
         FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON t.id_user=u.id
         WHERE b.id_pemilik=? AND t.status='menunggu_persetujuan' ORDER BY t.created_at DESC
     """,(session['user_id'],), fetchall=True)
-    
     aktif = db_execute("""
         SELECT t.*,b.nama_barang,u.nama as nama_peminjam,u.no_hp,u.id as id_peminjam
         FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON t.id_user=u.id
         WHERE b.id_pemilik=? AND t.status IN ('sedang_dipinjam','menunggu_pengembalian')
         ORDER BY t.created_at DESC
     """,(session['user_id'],), fetchall=True)
-    
     selesai = db_execute("""
         SELECT t.*,b.nama_barang,u.nama as nama_peminjam
         FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON t.id_user=u.id
         WHERE b.id_pemilik=? AND t.status='selesai' ORDER BY t.created_at DESC LIMIT 20
     """,(session['user_id'],), fetchall=True)
-    
-    denda_done = [l['id_transaksi'] for l in db_execute("SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='pemilik'",(session['user_id'],), fetchall=True)]
-    
+    denda_done = [l['id_transaksi'] for l in db_execute(
+        "SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='pemilik'",(session['user_id'],), fetchall=True)]
     laporan_masuk = db_execute("""
         SELECT l.*,u.nama as nama_peminjam,b.nama_barang
         FROM laporan l JOIN users u ON l.id_pelapor=u.id
@@ -810,25 +804,29 @@ def barang_saya():
         WHERE b.id_pemilik=? AND l.tipe_pelapor='peminjam' AND l.status='menunggu'
         ORDER BY l.created_at DESC
     """,(session['user_id'],), fetchall=True)
-    
-    reviews_peminjam_done = [r['id_transaksi'] for r in db_execute("SELECT id_transaksi FROM review_peminjam WHERE id_pemilik=?",(session['user_id'],), fetchall=True)]
-    
+    reviews_peminjam_done = [r['id_transaksi'] for r in db_execute(
+        "SELECT id_transaksi FROM review_peminjam WHERE id_pemilik=?",(session['user_id'],), fetchall=True)]
+    # Laporan denda yang menunggu input nominal dari pemilik
+    laporan_tunggu_nominal = db_execute("""
+        SELECT l.id,l.id_transaksi,b.nama_barang,l.jenis_masalah,l.kategori_kerusakan
+        FROM laporan l JOIN transaksi t ON l.id_transaksi=t.id
+        JOIN barang b ON t.id_barang=b.id
+        WHERE l.id_pelapor=? AND l.status='menunggu_harga'
+        ORDER BY l.created_at DESC
+    """,(session['user_id'],), fetchall=True)
     return render_template('barang_saya.html', barang=barang, bookings=bookings,
                            aktif=aktif, selesai=selesai, denda_done=denda_done,
                            laporan_masuk=laporan_masuk, reviews_peminjam_done=reviews_peminjam_done,
+                           laporan_tunggu_nominal=laporan_tunggu_nominal,
                            notif_count=notif_count())
 
 @app.route('/edit_barang/<int:id_barang>', methods=['GET','POST'])
 def edit_barang(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
-    
     barang = db_execute("SELECT * FROM barang WHERE id=? AND id_pemilik=?",(id_barang,session['user_id']), fetchone=True)
-    
-    # 2. CEK JIKA BARANG TIDAK ADA ATAU SUDAH DIHAPUS
-    if not barang or barang['status'] == 'dihapus':
-        flash('Barang tidak ditemukan, bukan milikmu, atau sudah dihapus.','error')
+    if not barang:
+        flash('Barang tidak ditemukan atau bukan milikmu.','error')
         return redirect(url_for('barang_saya'))
-        
     if request.method == 'POST':
         nama = request.form['nama_barang']
         kategori = request.form['kategori']
@@ -843,7 +841,6 @@ def edit_barang(id_barang):
                    (nama,kategori,harga,deskripsi,lokasi,stok,foto,id_barang), commit=True)
         flash('Barang berhasil diperbarui!','success')
         return redirect(url_for('barang_saya'))
-        
     return render_template('edit_barang.html', barang=barang, notif_count=notif_count())
 
 def hitung_biaya_upload(harga_sewa):
@@ -855,22 +852,7 @@ def hitung_biaya_upload(harga_sewa):
     elif harga_sewa < 20000000: return round(harga_sewa * 0.08)
     elif harga_sewa < 25000000: return round(harga_sewa * 0.10)
     else: return round(harga_sewa * 0.12)
-
-@app.route('/hapus_barang_pemilik/<int:id_barang>', methods=['POST'])
-def hapus_barang_pemilik(id_barang):
-    if 'user_id' not in session: return redirect(url_for('login'))
     
-    barang = db_execute("SELECT * FROM barang WHERE id_pemilik=? AND status != 'dihapus' ORDER BY created_at DESC",(session['user_id'],), fetchall=True)
-    
-    if cek_barang:
-        # SOFT DELETE: Ubah status jadi 'dihapus' agar riwayat transaksi lama tidak rusak
-        db_execute("UPDATE barang SET status='dihapus' WHERE id=?", (id_barang,), commit=True)
-        flash('Barang berhasil dihapus!', 'success')
-    else:
-        flash('Gagal menghapus! Barang tidak ditemukan atau bukan milikmu.', 'error')
-        
-    return redirect(url_for('barang_saya'))
-
 @app.route('/upload_barang', methods=['GET','POST'])
 def upload_barang():
     if 'user_id' not in session: return redirect(url_for('login'))
