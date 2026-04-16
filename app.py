@@ -1018,8 +1018,8 @@ def denda(id_transaksi):
         db_execute("""
             INSERT INTO laporan (id_pelapor,id_transaksi,jenis_masalah,deskripsi,
                 foto_bukti,tipe_pelapor,kategori_kerusakan,nominal_pemilik,
-                potongan_platform,total_tagihan,status_validasi)
-            VALUES (?,?,?,?,?,'pemilik',?,?,?,?,'menunggu_validasi')
+                potongan_platform,total_tagihan,status_validasi,status)
+            VALUES (?,?,?,?,?,'pemilik',?,?,?,?,'menunggu_validasi','menunggu_validasi')
         """, (session['user_id'],id_transaksi,jenis,deskripsi,foto,
               kategori,nominal_pemilik,potongan,total_tagihan), commit=True)
         add_notif(transaksi['id_user'], f"Pemilik melaporkan kerusakan pada '{transaksi['nama_barang']}'. Menunggu validasi admin.")
