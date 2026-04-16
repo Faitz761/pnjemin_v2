@@ -829,7 +829,10 @@ def hapus_barang(id_barang):
         return redirect(url_for('barang_saya'))
     # Cek apakah ada transaksi aktif
     transaksi_aktif = db_execute(
-        "SELECT id FROM transaksi WHERE id_barang=? AND status NOT IN ('selesai','dibatalkan','ditolak')",
+        """SELECT id FROM transaksi WHERE id_barang=? 
+           AND status IN ('menunggu','menunggu_persetujuan','menunggu_pembayaran',
+                          'diterima','sedang_dipinjam','menunggu_pengembalian',
+                          'menunggu_verifikasi')""",
         (id_barang,), fetchone=True
     )
     if transaksi_aktif:
