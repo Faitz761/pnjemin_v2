@@ -65,11 +65,6 @@
                     <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
                         <i class="fas fa-save"></i> Simpan Perubahan
                     </button>
-                    <form action="{{ url_for('hapus_barang_pemilik', id_barang=barang.id) }}" method="POST" onsubmit="return confirm('Yakin mau menghapus barang ini? Semua data terkait barang ini akan hilang dan tidak bisa dikembalikan.');" style="margin-top: 1rem;">
-    <button type="submit" class="btn btn-outline-danger" style="width: 100%;">
-        <i class="fas fa-trash-alt"></i> Hapus Barang Ini
-    </button>
-</form>
                     <a href="{{ url_for('barang_saya') }}" class="btn btn-sm" style="border:1px solid var(--border);color:var(--text-muted)">
                         Batal
                     </a>
