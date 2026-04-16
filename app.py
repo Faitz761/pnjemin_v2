@@ -857,13 +857,12 @@ def hitung_biaya_upload(harga_sewa):
 def hapus_barang_pemilik(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
     
-    # Cek apakah barang tersebut beneran ada dan milik user yang sedang login
-    cek_barang = db_execute("SELECT id FROM barang WHERE id=? AND id_pemilik=?", (id_barang, session['user_id']), fetchone=True)
+    barang = db_execute("SELECT * FROM barang WHERE id_pemilik=? AND status != 'dihapus' ORDER BY created_at DESC",(session['user_id'],), fetchall=True)
     
     if cek_barang:
-        # Eksekusi hapus barang
-        db_execute("DELETE FROM barang WHERE id=?", (id_barang,), commit=True)
-        flash('Barang berhasil dihapus secara permanen!', 'success')
+        # SOFT DELETE: Ubah status jadi 'dihapus' agar riwayat transaksi lama tidak rusak
+        db_execute("UPDATE barang SET status='dihapus' WHERE id=?", (id_barang,), commit=True)
+        flash('Barang berhasil dihapus!', 'success')
     else:
         flash('Gagal menghapus! Barang tidak ditemukan atau bukan milikmu.', 'error')
         
