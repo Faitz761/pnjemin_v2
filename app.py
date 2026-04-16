@@ -820,6 +820,25 @@ def barang_saya():
                            laporan_tunggu_nominal=laporan_tunggu_nominal,
                            notif_count=notif_count())
 
+@app.route('/hapus_barang/<int:id_barang>', methods=['POST'])
+def hapus_barang(id_barang):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    barang = db_execute("SELECT * FROM barang WHERE id=? AND id_pemilik=?", (id_barang, session['user_id']), fetchone=True)
+    if not barang:
+        flash('Barang tidak ditemukan atau bukan milikmu.', 'error')
+        return redirect(url_for('barang_saya'))
+    # Cek apakah ada transaksi aktif
+    transaksi_aktif = db_execute(
+        "SELECT id FROM transaksi WHERE id_barang=? AND status NOT IN ('selesai','dibatalkan','ditolak')",
+        (id_barang,), fetchone=True
+    )
+    if transaksi_aktif:
+        flash('Barang tidak bisa dihapus karena masih ada transaksi aktif.', 'error')
+        return redirect(url_for('edit_barang', id_barang=id_barang))
+    db_execute("DELETE FROM barang WHERE id=? AND id_pemilik=?", (id_barang, session['user_id']), commit=True)
+    flash('Barang berhasil dihapus.', 'success')
+    return redirect(url_for('barang_saya'))
+
 @app.route('/edit_barang/<int:id_barang>', methods=['GET','POST'])
 def edit_barang(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -852,7 +871,7 @@ def hitung_biaya_upload(harga_sewa):
     elif harga_sewa < 20000000: return round(harga_sewa * 0.08)
     elif harga_sewa < 25000000: return round(harga_sewa * 0.10)
     else: return round(harga_sewa * 0.12)
-    
+
 @app.route('/upload_barang', methods=['GET','POST'])
 def upload_barang():
     if 'user_id' not in session: return redirect(url_for('login'))

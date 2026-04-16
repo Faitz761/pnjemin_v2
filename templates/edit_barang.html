@@ -69,6 +69,15 @@
                         Batal
                     </a>
                 </div>
+
+                <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem">
+                    <form method="post" action="{{ url_for('hapus_barang', id_barang=barang.id) }}"
+                          onsubmit="return confirm('Yakin ingin menghapus barang ini? Tindakan ini tidak bisa dibatalkan.')">
+                        <button type="submit" style="width:100%;padding:0.6rem;background:transparent;border:1px solid #e74c3c;color:#e74c3c;border-radius:var(--radius-sm);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:0.4rem">
+                            <i class="fas fa-trash"></i> Hapus Barang
+                        </button>
+                    </form>
+                </div>
             </form>
         </div>
     </div>
