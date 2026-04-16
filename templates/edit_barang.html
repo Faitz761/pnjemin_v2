@@ -75,9 +75,9 @@
                 <form method="post" action="{{ url_for('hapus_barang', id_barang=barang.id) }}"
                       onsubmit="return confirm('Yakin ingin menghapus barang ini? Tindakan ini tidak bisa dibatalkan.')">
                     <button type="submit"
-                        onmouseover="this.style.background='#e74c3c';this.style.color='#fff'"
-                        onmouseout="this.style.background='transparent';this.style.color='#e74c3c'"
-                        style="width:100%;padding:0.6rem;background:transparent;border:1px solid #e74c3c;color:#e74c3c;border-radius:var(--radius-sm);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:0.4rem;transition:background 0.2s,color 0.2s">
+                        onmouseover="this.style.background='#c0392b';this.style.borderColor='#c0392b'"
+                        onmouseout="this.style.background='#e74c3c';this.style.borderColor='#e74c3c'"
+                        style="width:100%;padding:0.6rem;background:#e74c3c;border:1px solid #e74c3c;color:#fff;border-radius:var(--radius-sm);cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:0.4rem;transition:background 0.2s">
                         <i class="fas fa-trash"></i> Hapus Barang
                     </button>
                 </form>
