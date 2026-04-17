@@ -105,9 +105,18 @@
                 <i class="fas fa-times"></i> Stok Habis
             </button>
             {% endif %}
+            {% if session.get('tipe_akun') == 'peminjam' and not is_pemilik_sendiri and barang.stok > 0 %}
+            <form method="post" action="{{ url_for('keranjang_tambah', id_barang=barang.id) }}" style="margin-bottom:0.6rem">
+                <button type="submit" class="btn btn-outline btn-lg" style="width:100%;justify-content:center">
+                    <i class="fas fa-shopping-cart"></i> + Keranjang
+                </button>
+            </form>
+            {% endif %}
             {% if session.get('user_id') and not is_pemilik_sendiri %}
             <a href="{{ url_for('chat_detail', partner_id=barang.pemilik_id, id_barang=barang.id) }}" class="btn btn-outline btn-lg" style="width:100%;justify-content:center">
                 <i class="fas fa-comment-dots"></i> Chat Pemilik
+            </a>
+            {% endif %}
             </a>
             {% endif %}
         </div>

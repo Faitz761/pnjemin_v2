@@ -261,6 +261,13 @@
             {% endif %}
           </a>
         </li>
+        {% if session.get('tipe_akun') == 'peminjam' %}
+        <li>
+          <a href="{{ url_for('keranjang') }}" {% if request.endpoint=='keranjang' %}class="active"{% endif %} style="position:relative">
+            <i class="fas fa-shopping-cart"></i> Keranjang
+          </a>
+        </li>
+        {% endif %}
         {% endif %}
         {% endif %}
     </ul>
@@ -342,14 +349,14 @@
             </div>
             <div class="footer-contact-item">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>Indonesia 🇮🇩</span>
+                <span>RT.06/RW.02, Randegan Selatan, Randegan,<br>Kec. Tanggulangin, Kabupaten Sidoarjo,<br>Jawa Timur 61272 🇮🇩</span>
             </div>
             </div>
         </div>
     </div>
 
     <div class="footer-bottom">
-        <span>&copy; 2025 P-Njemin. All rights reserved.</span>
+        <span>&copy; 2026 P-Njemin. All rights reserved.</span>
         <div style="display:flex;gap:1.2rem">
             <a href="{{ url_for('tentang') }}">Tentang Kami</a>
             <a href="{{ url_for('bantuan') }}">Pusat Bantuan</a>

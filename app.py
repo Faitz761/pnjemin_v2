@@ -353,6 +353,15 @@ def init_db():
                 FOREIGN KEY (id_pemilik) REFERENCES users(id),
                 FOREIGN KEY (id_peminjam) REFERENCES users(id)
             );
+            db_execute("""
+        CREATE TABLE IF NOT EXISTS keranjang (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_user INTEGER NOT NULL,
+            id_barang INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(id_user, id_barang)
+        )
+    """, commit=True)
         '''
 
     db_executescript(sql)
@@ -597,6 +606,40 @@ def booking(id_barang):
         flash('Permintaan peminjaman dikirim! Menunggu persetujuan pemilik.','success')
         return redirect(url_for('riwayat'))
     return render_template('booking.html', barang=barang, notif_count=notif_count())
+
+@app.route('/keranjang')
+def keranjang():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    if session.get('tipe_akun') != 'peminjam':
+        flash('Keranjang hanya untuk akun peminjam.', 'error')
+        return redirect(url_for('home'))
+    items = db_execute("""
+        SELECT k.id, b.*, u.nama as nama_pemilik
+        FROM keranjang k
+        JOIN barang b ON k.id_barang=b.id
+        JOIN users u ON b.id_pemilik=u.id
+        WHERE k.id_user=?
+        ORDER BY k.created_at DESC
+    """, (session['user_id'],), fetchall=True)
+    return render_template('keranjang.html', items=items, notif_count=notif_count())
+
+@app.route('/keranjang/tambah/<int:id_barang>', methods=['POST'])
+def keranjang_tambah(id_barang):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    try:
+        db_execute("INSERT OR IGNORE INTO keranjang (id_user, id_barang) VALUES (?,?)",
+                   (session['user_id'], id_barang), commit=True)
+        flash('Barang ditambahkan ke keranjang!', 'success')
+    except:
+        flash('Gagal menambahkan ke keranjang.', 'error')
+    return redirect(request.referrer or url_for('home'))
+
+@app.route('/keranjang/hapus/<int:id_barang>', methods=['POST'])
+def keranjang_hapus(id_barang):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    db_execute("DELETE FROM keranjang WHERE id_user=? AND id_barang=?",
+               (session['user_id'], id_barang), commit=True)
+    return redirect(url_for('keranjang'))
 
 @app.route('/riwayat')
 def riwayat():
