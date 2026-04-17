@@ -353,7 +353,6 @@ def init_db():
                 FOREIGN KEY (id_pemilik) REFERENCES users(id),
                 FOREIGN KEY (id_peminjam) REFERENCES users(id)
             );
-            db_execute("""
         CREATE TABLE IF NOT EXISTS keranjang (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_user INTEGER NOT NULL,
