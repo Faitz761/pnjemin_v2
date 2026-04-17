@@ -604,7 +604,18 @@ def riwayat():
     if cek_blokir(): return redirect(url_for('akun_diblokir'))
     if session.get('role') == 'admin': return redirect(url_for('admin_dashboard'))
     if session.get('tipe_akun') == 'pemilik':
-        return render_template('riwayat_pemilik_info.html', notif_count=notif_count())
+        selesai = db_execute("""
+            SELECT t.*,b.nama_barang,u.nama as nama_peminjam
+            FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON t.id_user=u.id
+            WHERE b.id_pemilik=? AND t.status='selesai' ORDER BY t.created_at DESC LIMIT 20
+        """,(session['user_id'],), fetchall=True)
+        denda_done = [l['id_transaksi'] for l in db_execute(
+            "SELECT id_transaksi FROM laporan WHERE id_pelapor=? AND tipe_pelapor='pemilik'",(session['user_id'],), fetchall=True)]
+        reviews_peminjam_done = [r['id_transaksi'] for r in db_execute(
+            "SELECT id_transaksi FROM review_peminjam WHERE id_pemilik=?",(session['user_id'],), fetchall=True)]
+        return render_template('riwayat_pemilik_info.html', selesai=selesai,
+                               denda_done=denda_done, reviews_peminjam_done=reviews_peminjam_done,
+                               notif_count=notif_count())
     transaksi = db_execute("""
         SELECT t.*,b.nama_barang,b.foto,b.harga_sewa,u.nama as nama_pemilik
         FROM transaksi t JOIN barang b ON t.id_barang=b.id JOIN users u ON b.id_pemilik=u.id

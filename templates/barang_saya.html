@@ -145,50 +145,6 @@
     </div>
     {% endif %}
 
-    <!-- TRANSAKSI SELESAI → LAPORAN DENDA -->
-    {% if selesai %}
-    <div class="card" style="margin-bottom:1.5rem">
-        <div class="card-header" style="color:var(--danger)"><i class="fas fa-flag"></i> Riwayat Selesai & Denda</div>
-        <div class="card-body" style="padding:0.5rem">
-            {% for t in selesai %}
-            <div class="aktif-row">
-                <div>
-                    <div style="font-weight:700;font-size:0.88rem">{{ t.nama_barang }}</div>
-                    <div style="font-size:0.78rem;color:var(--text-muted)">Peminjam: {{ t.nama_peminjam }} &middot; {{ t.created_at | tgl }}</div>
-                    {% if t.foto_serah or t.foto_terima %}
-                    <div style="display:flex;gap:0.6rem;margin-top:0.4rem">
-                        {% if t.foto_serah %}
-                        <a href="{{ t.foto_serah | foto_src }}" target="_blank" style="font-size:0.72rem;color:green"><i class="fas fa-image"></i> Foto Awal</a>
-                        {% endif %}
-                        {% if t.foto_terima %}
-                        <a href="{{ t.foto_terima | foto_src }}" target="_blank" style="font-size:0.72rem;color:var(--primary)"><i class="fas fa-image"></i> Foto Akhir</a>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% if t.id not in denda_done %}
-                <div style="display:flex;gap:0.5rem;flex-direction:column;align-items:flex-end">
-                    <a href="{{ url_for('denda', id_transaksi=t.id) }}" class="btn btn-danger btn-sm"><i class="fas fa-flag"></i> Laporkan Denda</a>
-                    {% if t.id not in reviews_peminjam_done %}
-                    <a href="{{ url_for('review_peminjam', id_transaksi=t.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-star"></i> Beri Ulasan Peminjam</a>
-                    {% endif %}
-                </div>
-                {% else %}
-                <div style="display:flex;gap:0.5rem;flex-direction:column;align-items:flex-end">
-                    <span class="badge badge-secondary">Sudah dilaporkan</span>
-                    {% if t.id not in reviews_peminjam_done %}
-                    <a href="{{ url_for('review_peminjam', id_transaksi=t.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-star"></i> Beri Ulasan Peminjam</a>
-                    {% else %}
-                    <span class="badge badge-secondary" style="margin-top:0.2rem">Sudah diulas</span>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
     <!-- DAFTAR BARANG -->
     <div class="card">
         <div class="card-header"><i class="fas fa-boxes" style="color:var(--primary)"></i> Daftar Barang ({{ barang|length }})</div>
