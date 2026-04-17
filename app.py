@@ -354,13 +354,12 @@ def init_db():
                 FOREIGN KEY (id_peminjam) REFERENCES users(id)
             );
         CREATE TABLE IF NOT EXISTS keranjang (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_user INTEGER NOT NULL,
-            id_barang INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(id_user, id_barang)
-        )
-    """, commit=True)
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_user INTEGER NOT NULL,
+                id_barang INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(id_user, id_barang)
+            );
         '''
 
     db_executescript(sql)
