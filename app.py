@@ -625,10 +625,10 @@ def keranjang():
 def keranjang_tambah(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
     try:
-        db_execute("INSERT OR IGNORE INTO keranjang (id_user, id_barang) VALUES (?,?)",
+        db_execute("INSERT INTO keranjang (id_user, id_barang) VALUES (?,?) ON CONFLICT (id_user, id_barang) DO NOTHING",
                    (session['user_id'], id_barang), commit=True)
         flash('Barang ditambahkan ke keranjang!', 'success')
-    except:
+    except Exception as e:
         flash('Gagal menambahkan ke keranjang.', 'error')
     return redirect(request.referrer or url_for('home'))
 
