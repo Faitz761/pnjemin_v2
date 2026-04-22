@@ -118,6 +118,19 @@ def db_executescript(sql):
 def add_notif(id_user, pesan):
     db_execute("INSERT INTO notifikasi (id_user, pesan) VALUES (?,?)", (id_user, pesan), commit=True)
 
+def notif_po(id_barang):
+    """Kirim notif ke semua peminjam yang PO barang ini, lalu hapus PO mereka."""
+    barang = db_execute("SELECT nama_barang FROM barang WHERE id=?", (id_barang,), fetchone=True)
+    if not barang: return
+    po_list = db_execute(
+        "SELECT id_user FROM po_request WHERE id_barang=? AND notified=0",
+        (id_barang,), fetchall=True
+    )
+    for po in po_list:
+        add_notif(po['id_user'], f"Stok '{barang['nama_barang']}' sudah tersedia lagi! Yuk langsung booking.")
+    if po_list:
+        db_execute("UPDATE po_request SET notified=1 WHERE id_barang=?", (id_barang,), commit=True)
+
 def notif_count():
     if 'user_id' not in session: return 0
     row = db_execute("SELECT COUNT(*) AS c FROM notifikasi WHERE id_user=? AND dibaca=0", (session['user_id'],), fetchone=True)
@@ -353,11 +366,19 @@ def init_db():
                 FOREIGN KEY (id_pemilik) REFERENCES users(id),
                 FOREIGN KEY (id_peminjam) REFERENCES users(id)
             );
-        CREATE TABLE IF NOT EXISTS keranjang (
+            CREATE TABLE IF NOT EXISTS keranjang (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_user INTEGER NOT NULL,
                 id_barang INTEGER NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(id_user, id_barang)
+            );
+            CREATE TABLE IF NOT EXISTS po_request (
+                id SERIAL PRIMARY KEY,
+                id_user INTEGER NOT NULL,
+                id_barang INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                notified INTEGER DEFAULT 0,
                 UNIQUE(id_user, id_barang)
             );
         '''
@@ -639,6 +660,28 @@ def keranjang_hapus(id_barang):
                (session['user_id'], id_barang), commit=True)
     return redirect(url_for('keranjang'))
 
+@app.route('/po/<int:id_barang>', methods=['POST'])
+def po_request(id_barang):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    if session.get('tipe_akun') != 'peminjam':
+        flash('Fitur PO hanya untuk peminjam.', 'error')
+        return redirect(request.referrer or url_for('home'))
+    barang = db_execute("SELECT * FROM barang WHERE id=?", (id_barang,), fetchone=True)
+    if not barang:
+        flash('Barang tidak ditemukan.', 'error')
+        return redirect(url_for('home'))
+    if barang['stok'] > 0:
+        flash('Stok sudah tersedia, langsung booking saja!', 'info')
+        return redirect(url_for('detail_barang', id=id_barang))
+    try:
+        db_execute("INSERT INTO po_request (id_user, id_barang) VALUES (?,?) ON CONFLICT (id_user, id_barang) DO NOTHING",
+                   (session['user_id'], id_barang), commit=True)
+        add_notif(barang['id_pemilik'], f"Ada peminjam yang ingin PO '{barang['nama_barang']}' saat stok tersedia.")
+        flash('Permintaan PO berhasil! Kamu akan dapat notifikasi saat stok tersedia.', 'success')
+    except:
+        flash('Gagal mendaftar PO.', 'error')
+    return redirect(url_for('detail_barang', id=id_barang))
+
 @app.route('/riwayat')
 def riwayat():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -913,6 +956,8 @@ def edit_barang(id_barang):
         if new_foto: foto = new_foto
         db_execute("UPDATE barang SET nama_barang=?,kategori=?,harga_sewa=?,deskripsi=?,lokasi=?,stok=?,foto=? WHERE id=?",
                    (nama,kategori,harga,deskripsi,lokasi,stok,foto,id_barang), commit=True)
+        if stok > 0:
+            notif_po(id_barang)
         flash('Barang berhasil diperbarui!','success')
         return redirect(url_for('barang_saya'))
     return render_template('edit_barang.html', barang=barang, notif_count=notif_count())
@@ -977,7 +1022,8 @@ def tolak_booking(id_transaksi):
     if 'user_id' not in session: return redirect(url_for('login'))
     t = db_execute("SELECT t.*,b.nama_barang FROM transaksi t JOIN barang b ON t.id_barang=b.id WHERE t.id=?",(id_transaksi,), fetchone=True)
     db_execute("UPDATE transaksi SET status='dibatalkan' WHERE id=?",(id_transaksi,), commit=True)
-    db_execute("UPDATE barang SET stok=stok+1 WHERE id=?",(t['id_barang'],), commit=True)   
+    db_execute("UPDATE barang SET stok=stok+1 WHERE id=?",(t['id_barang'],), commit=True)
+    notif_po(t['id_barang'])
     add_notif(t['id_user'],f"Booking '{t['nama_barang']}' ditolak oleh pemilik.")
     flash('Booking ditolak.','success')
     return redirect(url_for('barang_saya'))
@@ -1009,6 +1055,7 @@ def konfirmasi_pengembalian(id_transaksi):
         db_execute("UPDATE users SET total_transaksi=total_transaksi+1 WHERE id=?",(t['id_user'],), commit=True)
         db_execute("UPDATE barang SET total_disewa=total_disewa+1 WHERE id=?",(t['id_barang'],), commit=True)
         db_execute("UPDATE barang SET stok=stok+1 WHERE id=?",(t['id_barang'],), commit=True)
+        notif_po(t['id_barang'])
         add_notif(t['id_user'],f"Transaksi '{t['nama_barang']}' selesai! Mau beri ulasan barang ini?")
         add_notif(session['user_id'],f"Barang '{t['nama_barang']}' sudah kembali. Mau beri ulasan peminjam?")
         flash('Pengembalian dikonfirmasi. Transaksi selesai!','success')

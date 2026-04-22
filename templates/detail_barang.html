@@ -104,6 +104,12 @@
             <button class="btn btn-lg" style="width:100%;justify-content:center;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;margin-bottom:0.6rem">
                 <i class="fas fa-times"></i> Stok Habis
             </button>
+            {% if session.get('tipe_akun') == 'peminjam' %}
+            <form method="post" action="{{ url_for('po_request', id_barang=barang.id) }}" style="margin-bottom:0.6rem">
+                <button type="submit" class="btn btn-outline btn-lg" style="width:100%;justify-content:center;border-color:#f97316;color:#f97316">
+                    <i class="fas fa-bell"></i> PO / Notifikasi Stok
+                </button>
+            </form>
             {% endif %}
             {% if session.get('tipe_akun') == 'peminjam' and not is_pemilik_sendiri and barang.stok > 0 %}
             <form method="post" action="{{ url_for('keranjang_tambah', id_barang=barang.id) }}" style="margin-bottom:0.6rem">
