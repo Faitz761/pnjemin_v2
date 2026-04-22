@@ -111,6 +111,7 @@
                 </button>
             </form>
             {% endif %}
+            {% endif %}
             {% if session.get('tipe_akun') == 'peminjam' and not is_pemilik_sendiri and barang.stok > 0 %}
             <form method="post" action="{{ url_for('keranjang_tambah', id_barang=barang.id) }}" style="margin-bottom:0.6rem">
                 <button type="submit" class="btn btn-outline btn-lg" style="width:100%;justify-content:center">
