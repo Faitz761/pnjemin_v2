@@ -79,7 +79,7 @@
                 <span class="stok-badge stok-habis"><i class="fas fa-times-circle"></i> Stok habis</span>
                 {% endif %}
             </div>
-            <p class="detail-desc">{{ barang.deskripsi or 'Tidak ada deskripsi.' }}</p>
+            <p class="detail-desc" style="white-space:pre-wrap">{{ barang.deskripsi or 'Tidak ada deskripsi.' }}</p>
             <!-- PEMILIK -->
             <div class="pemilik-card">
                 <div class="pemilik-avatar">{{ barang.nama_pemilik[0].upper() }}</div>
