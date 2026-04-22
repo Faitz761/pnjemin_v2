@@ -26,7 +26,7 @@
                     <div class="form-group">
                         <label>Kategori</label>
                         <select name="kategori" class="form-control" required>
-                            {% for k in ['Elektronik','Olahraga & Outdoor','Peralatan Rumah','Kendaraan','Pakaian & Kostum','Alat Musik','Lainnya'] %}
+                            {% for k in ['Elektronik','Olahraga & Outdoor','Peralatan Rumah','Kendaraan','Pakaian & Kostum','Buku','Alat Musik','Lainnya'] %}
                             <option value="{{ k }}" {% if barang.kategori == k %}selected{% endif %}>{{ k }}</option>
                             {% endfor %}
                         </select>
