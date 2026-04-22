@@ -80,7 +80,7 @@
                 {% endif %}
             </div>
             <div id="desc-wrapper" style="position:relative;overflow:hidden;max-height:120px;transition:max-height 0.4s ease">
-    <div class="detail-desc">{{ barang.deskripsi | safe }}</div>
+    <p class="detail-desc" style="white-space:pre-wrap;margin-bottom:0">{{ barang.deskripsi | safe }}</p>
     <div id="desc-fade" style="position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(transparent,white)"></div>
 </div>
 <button id="desc-toggle" onclick="
