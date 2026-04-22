@@ -80,7 +80,7 @@
                 {% endif %}
             </div>
             <div id="desc-wrapper" style="position:relative;overflow:hidden;max-height:120px;transition:max-height 0.4s ease">
-    <p class="detail-desc" style="white-space:pre-wrap;margin-bottom:0">{{ barang.deskripsi | safe }}</p>
+    <div class="detail-desc">{{ barang.deskripsi | safe }}</div>
     <div id="desc-fade" style="position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(transparent,white)"></div>
 </div>
 <button id="desc-toggle" onclick="
@@ -90,14 +90,14 @@
     if(w.style.maxHeight === '120px') {
         w.style.maxHeight = w.scrollHeight + 'px';
         f.style.display = 'none';
-        b.textContent = 'Sembunyikan ▲';
+        b.innerHTML = 'Sembunyikan <i class=\'fas fa-chevron-up\'></i>';
     } else {
         w.style.maxHeight = '120px';
         f.style.display = 'block';
-        b.textContent = 'Lihat Selengkapnya ▼';
+        b.innerHTML = 'Lihat Selengkapnya <i class=\'fas fa-chevron-down\'></i>';
     }
-" style="background:none;border:none;color:var(--primary);font-size:0.85rem;cursor:pointer;padding:0.4rem 0;font-weight:600;margin-bottom:1.2rem">
-    Lihat Selengkapnya ▼
+" style="background:none;border:none;color:var(--primary);font-size:0.85rem;cursor:pointer;padding:0.4rem 0;font-weight:600;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.3rem">
+    Lihat Selengkapnya <i class="fas fa-chevron-down"></i>
 </button>
             <!-- PEMILIK -->
             <div class="pemilik-card">
