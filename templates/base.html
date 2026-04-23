@@ -252,6 +252,7 @@
         <li><a href="{{ url_for('barang_saya') }}" {% if request.endpoint=='barang_saya' %}class="active"{% endif %}><i class="fas fa-box"></i> Barang Saya</a></li>
         {% endif %}
         {% if session.get('role') != 'admin' %}
+        {% if session.get('status') != 'diblokir' %}
         <li><a href="{{ url_for('riwayat') }}" {% if request.endpoint=='riwayat' %}class="active"{% endif %}><i class="fas fa-history"></i> Riwayat</a></li>
         <li>
           <a href="{{ url_for('chat_list') }}" {% if request.endpoint in ['chat_list','chat_detail'] %}class="active"{% endif %} style="position:relative">
@@ -262,11 +263,7 @@
           </a>
         </li>
         {% if session.get('tipe_akun') == 'peminjam' %}
-        <li>
-          <a href="{{ url_for('keranjang') }}" {% if request.endpoint=='keranjang' %}class="active"{% endif %} style="position:relative">
-            <i class="fas fa-shopping-cart"></i> Keranjang
-          </a>
-        </li>
+        <li><a href="{{ url_for('keranjang') }}" {% if request.endpoint=='keranjang' %}class="active"{% endif %} style="position:relative"><i class="fas fa-shopping-cart"></i> Keranjang</a></li>
         {% endif %}
         {% endif %}
         {% endif %}

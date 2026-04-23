@@ -181,9 +181,13 @@ def cek_auto_freeze():
         AND l.created_at < datetime('now', '-48 hours')
     """, (session['user_id'],), fetchone=True)
     if denda_telat:
-        db_execute("UPDATE users SET status='diblokir' WHERE id=?",
-                   (session['user_id'],), commit=True)
-        session['status'] = 'diblokir'
+        banding_aktif = db_execute(
+            "SELECT id FROM banding WHERE id_user=? AND status='diterima'",
+            (session['user_id'],), fetchone=True)
+        if not banding_aktif:
+            db_execute("UPDATE users SET status='diblokir' WHERE id=?",
+                       (session['user_id'],), commit=True)
+            session['status'] = 'diblokir'
 
 def save_foto(f, prefix):
     """Upload foto ke Cloudinary (production) atau lokal (development)."""
@@ -629,6 +633,7 @@ def booking(id_barang):
 @app.route('/keranjang')
 def keranjang():
     if 'user_id' not in session: return redirect(url_for('login'))
+    if cek_blokir(): return redirect(url_for('akun_diblokir'))
     if session.get('tipe_akun') != 'peminjam':
         flash('Keranjang hanya untuk akun peminjam.', 'error')
         return redirect(url_for('home'))
@@ -645,6 +650,7 @@ def keranjang():
 @app.route('/keranjang/tambah/<int:id_barang>', methods=['POST'])
 def keranjang_tambah(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
+    if cek_blokir(): return redirect(url_for('akun_diblokir'))
     try:
         db_execute("INSERT INTO keranjang (id_user, id_barang) VALUES (?,?) ON CONFLICT (id_user, id_barang) DO NOTHING",
                    (session['user_id'], id_barang), commit=True)
@@ -656,6 +662,7 @@ def keranjang_tambah(id_barang):
 @app.route('/keranjang/hapus/<int:id_barang>', methods=['POST'])
 def keranjang_hapus(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
+    if cek_blokir(): return redirect(url_for('akun_diblokir'))
     db_execute("DELETE FROM keranjang WHERE id_user=? AND id_barang=?",
                (session['user_id'], id_barang), commit=True)
     return redirect(url_for('keranjang'))
