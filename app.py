@@ -212,6 +212,15 @@ def save_foto(f, prefix):
         f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return filename
 
+def save_multi_foto(files, prefix):
+    urls = []
+    for f in files:
+        if f and f.filename:
+            url = save_foto(f, prefix)
+            if url:
+                urls.append(url)
+    return urls
+
 # ══════════════════════════════════════════════════
 #  INIT DATABASE
 # ══════════════════════════════════════════════════
@@ -601,7 +610,8 @@ def detail_barang(id):
     is_pemilik_sendiri = False
     if 'user_id' in session:
         is_pemilik_sendiri = (barang['id_pemilik'] == session['user_id']) or (session.get('role') == 'admin') or (session.get('tipe_akun') == 'pemilik')
-    return render_template('detail_barang.html', barang=barang, reviews=reviews, total_disewa=total_disewa, notif_count=notif_count(), is_pemilik_sendiri=is_pemilik_sendiri)
+    barang_fotos = db_execute("SELECT * FROM foto_barang WHERE id_barang=? ORDER BY urutan", (id,), fetchall=True)
+    return render_template('detail_barang.html', barang=barang, reviews=reviews, total_disewa=total_disewa, notif_count=notif_count(), is_pemilik_sendiri=is_pemilik_sendiri, barang_fotos=barang_fotos)
 
 @app.route('/booking/<int:id_barang>', methods=['GET','POST'])
 def booking(id_barang):
@@ -922,6 +932,26 @@ def barang_saya():
                            laporan_tunggu_nominal=laporan_tunggu_nominal,
                            notif_count=notif_count())
 
+@app.route('/foto_barang/hapus/<int:id_foto>', methods=['POST'])
+def hapus_foto_barang(id_foto):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    foto = db_execute("""
+        SELECT fb.*, b.id_pemilik FROM foto_barang fb
+        JOIN barang b ON fb.id_barang = b.id
+        WHERE fb.id=?
+    """, (id_foto,), fetchone=True)
+    if not foto or foto['id_pemilik'] != session['user_id']:
+        flash('Foto tidak ditemukan.', 'error')
+        return redirect(url_for('barang_saya'))
+    if USE_CLOUDINARY and foto['url'].startswith('http'):
+        try:
+            public_id = 'pnjemin/' + foto['url'].split('/')[-1].rsplit('.', 1)[0]
+            cloudinary.uploader.destroy(public_id)
+        except: pass
+    db_execute("DELETE FROM foto_barang WHERE id=?", (id_foto,), commit=True)
+    flash('Foto berhasil dihapus.', 'success')
+    return redirect(request.referrer or url_for('barang_saya'))
+
 @app.route('/hapus_barang/<int:id_barang>', methods=['POST'])
 def hapus_barang(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -963,11 +993,19 @@ def edit_barang(id_barang):
         if new_foto: foto = new_foto
         db_execute("UPDATE barang SET nama_barang=?,kategori=?,harga_sewa=?,deskripsi=?,lokasi=?,stok=?,foto=? WHERE id=?",
                    (nama,kategori,harga,deskripsi,lokasi,stok,foto,id_barang), commit=True)
+        fotos_baru = request.files.getlist('foto_tambahan')
+        urls_baru = save_multi_foto(fotos_baru[:15], f'barang_{session["user_id"]}')
+        jumlah_existing = db_execute("SELECT COUNT(*) as c FROM foto_barang WHERE id_barang=?", (id_barang,), fetchone=True)['c']
+        sisa_slot = 15 - jumlah_existing
+        for i, url in enumerate(urls_baru[:sisa_slot]):
+            db_execute("INSERT INTO foto_barang (id_barang, url, urutan) VALUES (?,?,?)",
+                       (id_barang, url, jumlah_existing + i), commit=True)
         if stok > 0:
             notif_po(id_barang)
         flash('Barang berhasil diperbarui!','success')
         return redirect(url_for('barang_saya'))
-    return render_template('edit_barang.html', barang=barang, notif_count=notif_count())
+    barang_fotos = db_execute("SELECT * FROM foto_barang WHERE id_barang=? ORDER BY urutan", (id_barang,), fetchall=True)
+    return render_template('edit_barang.html', barang=barang, barang_fotos=barang_fotos, notif_count=notif_count())
 
 def hitung_biaya_upload(harga_sewa):
     """Hitung biaya upload berdasarkan harga sewa per hari.
@@ -1000,6 +1038,12 @@ def upload_barang():
         db_execute("INSERT INTO barang (nama_barang,kategori,harga_sewa,deskripsi,lokasi,stok,foto,id_pemilik) VALUES (?,?,?,?,?,?,?,?)",
                    (request.form['nama_barang'],request.form['kategori'],harga_sewa,request.form['deskripsi'],request.form['lokasi'],int(request.form['stok']),foto,session['user_id']), commit=True)
         flash('Barang berhasil diupload!','success')
+        barang_id = db_execute("SELECT id FROM barang WHERE id_pemilik=? ORDER BY created_at DESC LIMIT 1", (session['user_id'],), fetchone=True)['id']
+        fotos = request.files.getlist('foto_tambahan')
+        urls = save_multi_foto(fotos[:15], f'barang_{session["user_id"]}')
+        for i, url in enumerate(urls):
+            db_execute("INSERT INTO foto_barang (id_barang, url, urutan) VALUES (?,?,?)",
+                       (barang_id, url, i), commit=True)
         return redirect(url_for('barang_saya'))
     return render_template('upload_barang.html', notif_count=notif_count())
 
