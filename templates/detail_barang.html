@@ -49,21 +49,22 @@
         <div>
             <div class="detail-foto">
                 {% if barang.foto %}
-                <img src="{{ barang.foto | foto_src }}" alt="{{ barang.nama_barang }}">
+                <img class="detail-img" src="{{ barang.foto | foto_src }}" alt="{{ barang.nama_barang }}">
                 {% else %}
                 <i class="fas fa-box-open"></i>
                 {% endif %}
-                {% if barang_fotos %}
-<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
-    {% for f in barang_fotos %}
-    <img src="{{ f.url | foto_src }}"
-         onclick="document.querySelector('.detail-img').src=this.src"
-         style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent"
-         onmouseover="this.style.borderColor='var(--primary)'"
-         onmouseout="this.style.borderColor='transparent'">
-    {% endfor %}
-</div>
-{% endif %}
+            </div>
+            {% if barang_fotos %}
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+                {% for f in barang_fotos %}
+                <img src="{{ f.url | foto_src }}"
+                     onclick="document.querySelector('.detail-img').src=this.src"
+                     style="width:64px;height:64px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent"
+                     onmouseover="this.style.borderColor='var(--primary)'"
+                     onmouseout="this.style.borderColor='transparent'">
+                {% endfor %}
+            </div>
+            {% endif %}
             </div>
             {% if barang.kategori %}
             <div style="margin-top:0.8rem">
