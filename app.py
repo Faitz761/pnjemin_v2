@@ -639,7 +639,8 @@ def booking(id_barang):
         add_notif(barang['id_pemilik'],f"Ada permintaan booking untuk '{barang['nama_barang']}'!")
         flash('Permintaan peminjaman dikirim! Menunggu persetujuan pemilik.','success')
         return redirect(url_for('riwayat'))
-    return render_template('booking.html', barang=barang, notif_count=notif_count())
+    barang_fotos = db_execute("SELECT * FROM foto_barang WHERE id_barang=? ORDER BY urutan", (id,), fetchall=True)
+    return render_template('detail_barang.html', barang=barang, reviews=reviews, total_disewa=total_disewa, notif_count=notif_count(), is_pemilik_sendiri=is_pemilik_sendiri, barang_fotos=barang_fotos)
 
 @app.route('/keranjang')
 def keranjang():
@@ -1006,7 +1007,8 @@ def edit_barang(id_barang):
             notif_po(id_barang)
         flash('Barang berhasil diperbarui!','success')
         return redirect(url_for('barang_saya'))
-    return render_template('edit_barang.html', barang=barang, notif_count=notif_count())
+    barang_fotos = db_execute("SELECT * FROM foto_barang WHERE id_barang=? ORDER BY urutan", (id_barang,), fetchall=True)
+    return render_template('edit_barang.html', barang=barang, barang_fotos=barang_fotos, notif_count=notif_count())
 
 def hitung_biaya_upload(harga_sewa):
     """Hitung biaya upload berdasarkan harga sewa per hari.
