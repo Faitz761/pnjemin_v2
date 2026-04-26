@@ -56,6 +56,14 @@
                                value="{{ barang.stok }}" min="0" max="99" required>
                     </div>
                 </div>
+                {% if barang.foto %}
+            <div style="margin-bottom:1.2rem;text-align:center">
+                <img src="{{ barang.foto | foto_src }}"
+                     style="max-height:180px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border)">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Foto saat ini</div>
+            </div>
+            {% endif %}
+            <form method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Ganti Foto Utama (opsional)</label>
                     <input type="file" name="foto" class="form-control" accept="image/*">
@@ -90,6 +98,46 @@
                     <input type="file" id="foto-input-hidden" accept="image/*" style="display:none" onchange="tambahFoto(this)">
                     <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG.</small>
                     <div id="foto-inputs"></div>
+                </div>
+                <div class="form-group">
+                    <label>Nama Barang</label>
+                    <input type="text" name="nama_barang" class="form-control"
+                           value="{{ barang.nama_barang }}"
+                           placeholder="Contoh: Tenda Camping Coleman 4 Orang" required>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select name="kategori" class="form-control" required>
+                            {% for k in ['Elektronik','Olahraga & Outdoor','Peralatan Rumah','Kendaraan','Pakaian & Kostum','Buku','Alat Musik','Lainnya'] %}
+                            <option value="{{ k }}" {% if barang.kategori == k %}selected{% endif %}>{{ k }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Sewa / Hari (Rp)</label>
+                        <input type="number" name="harga_sewa" class="form-control"
+                               value="{{ barang.harga_sewa|int }}"
+                               placeholder="Contoh: 75000" min="1000" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Deskripsi</label>
+                    <div id="quill-editor" style="height:150px;background:white;border-radius:var(--radius-sm)"></div>
+                    <input type="hidden" name="deskripsi" id="deskripsi-input">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="form-group">
+                        <label>Lokasi Pengambilan</label>
+                        <input type="text" name="lokasi" class="form-control"
+                               value="{{ barang.lokasi or '' }}"
+                               placeholder="Contoh: Jakarta Selatan, Mampang">
+                    </div>
+                    <div class="form-group">
+                        <label>Stok Tersedia</label>
+                        <input type="number" name="stok" class="form-control"
+                               value="{{ barang.stok }}" min="0" max="99" required>
+                    </div>
                 </div>
                 <div style="display:flex;gap:0.8rem;margin-top:0.5rem">
                     <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
