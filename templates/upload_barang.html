@@ -42,6 +42,13 @@
                         <img id="previewImg" src="" alt="Preview">
                     </div>
                 </div>
+                <div style="margin-top:1rem">
+    <label class="form-label">Foto Tambahan (maks. 15 foto)</label>
+    <input type="file" name="foto_tambahan" multiple accept="image/*" class="form-control"
+           onchange="previewFoto(this)">
+    <div id="preview-container" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.8rem"></div>
+    <small style="color:var(--text-muted)">Pilih beberapa foto sekaligus. Format: JPG, PNG.</small>
+</div>
                 <div class="form-group">
                     <label>Nama Barang</label>
                     <input type="text" name="nama_barang" class="form-control" placeholder="Contoh: Tenda Camping 4 Orang" required>
@@ -147,6 +154,24 @@ function previewFoto(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+</script>
+
+<script>
+function previewFoto(input) {
+    const container = document.getElementById('preview-container');
+    container.innerHTML = '';
+    const files = Array.from(input.files).slice(0, 15);
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const div = document.createElement('div');
+            div.style.cssText = 'position:relative;width:80px;height:80px';
+            div.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px">`;
+            container.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
 }
 </script>
 

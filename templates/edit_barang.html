@@ -15,6 +15,26 @@
                 <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Foto saat ini</div>
             </div>
             {% endif %}
+            {% set fotos = [] %}
+{% if barang_fotos %}
+<div style="margin-top:1rem">
+    <label class="form-label">Foto yang Sudah Ada</label>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+        {% for f in barang_fotos %}
+        <div style="position:relative;width:80px;height:80px">
+            <img src="{{ f.url | foto_src }}" style="width:80px;height:80px;object-fit:cover;border-radius:6px">
+            <form method="post" action="{{ url_for('hapus_foto_barang', id_foto=f.id) }}"
+                  onsubmit="return confirm('Hapus foto ini?')"
+                  style="position:absolute;top:2px;right:2px">
+                <button type="submit" style="background:#e74c3c;border:none;color:white;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center;padding:0">
+                    <i class="fas fa-times"></i>
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
             <form method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Nama Barang</label>
