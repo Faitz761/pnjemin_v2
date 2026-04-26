@@ -42,17 +42,6 @@
                         <img id="previewImg" src="" alt="Preview">
                     </div>
                 </div>
-                <div style="margin-top:1rem">
-    <label class="form-label">Foto Tambahan (maks. 15 foto)</label>
-    <div id="foto-list" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"></div>
-    <button type="button" onclick="document.getElementById('foto-input-hidden').click()"
-        style="padding:0.5rem 1rem;background:transparent;border:1px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--text-muted);font-size:0.85rem">
-        <i class="fas fa-plus"></i> Tambah Foto
-    </button>
-    <input type="file" id="foto-input-hidden" accept="image/*" style="display:none" onchange="tambahFoto(this)">
-    <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG. Maks. 15 foto.</small>
-    <div id="foto-inputs"></div>
-</div>
                 <div class="form-group">
                     <label>Nama Barang</label>
                     <input type="text" name="nama_barang" class="form-control" placeholder="Contoh: Tenda Camping 4 Orang" required>
@@ -158,60 +147,6 @@ function previewFoto(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
-}
-</script>
-
-<script>
-let fotoFiles = [];
-
-function tambahFoto(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (fotoFiles.length >= 15) {
-        alert('Maksimal 15 foto!');
-        return;
-    }
-    fotoFiles.push(file);
-    renderFotoList();
-    input.value = '';
-}
-
-function hapusFotoBaru(index) {
-    fotoFiles.splice(index, 1);
-    renderFotoList();
-}
-
-function renderFotoList() {
-    const list = document.getElementById('foto-list');
-    list.innerHTML = '';
-    fotoFiles.forEach((file, i) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const div = document.createElement('div');
-            div.style.cssText = 'position:relative;width:80px;height:80px;flex-shrink:0';
-            div.innerHTML = `
-                <img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px">
-                <button type="button" onclick="hapusFotoBaru(${i})"
-                    style="position:absolute;top:2px;right:2px;background:#e74c3c;border:none;color:white;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center;padding:0">
-                    <i class="fas fa-times"></i>
-                </button>`;
-            list.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-    });
-    // Sync ke hidden inputs
-    const container = document.getElementById('foto-inputs');
-    container.innerHTML = '';
-    // Pakai DataTransfer untuk pass file list ke input
-    const dt = new DataTransfer();
-    fotoFiles.forEach(f => dt.items.add(f));
-    const inp = document.createElement('input');
-    inp.type = 'file';
-    inp.name = 'foto_tambahan';
-    inp.multiple = true;
-    inp.style.display = 'none';
-    inp.files = dt.files;
-    container.appendChild(inp);
 }
 </script>
 

@@ -15,39 +15,6 @@
                 <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Foto saat ini</div>
             </div>
             {% endif %}
-            {% set fotos = [] %}
-{% if barang_fotos %}
-<div style="margin-top:1rem">
-    <label class="form-label">Foto yang Sudah Ada</label>
-    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
-        {% for f in barang_fotos %}
-        <div style="position:relative;width:80px;height:80px;flex-shrink:0">
-            <img src="{{ f.url | foto_src }}" style="width:80px;height:80px;object-fit:cover;border-radius:6px">
-            <form method="post" action="{{ url_for('hapus_foto_barang', id_foto=f.id) }}"
-                  onsubmit="return confirm('Hapus foto ini?')"
-                  style="position:absolute;top:2px;right:2px;margin:0">
-                <button type="submit"
-                    style="background:#e74c3c;border:none;color:white;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center;padding:0">
-                    <i class="fas fa-times"></i>
-                </button>
-            </form>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-<div style="margin-top:1rem">
-    <label class="form-label">Tambah Foto Baru</label>
-    <div id="foto-list" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"></div>
-    <button type="button" onclick="document.getElementById('foto-input-hidden').click()"
-        style="padding:0.5rem 1rem;background:transparent;border:1px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--text-muted);font-size:0.85rem">
-        <i class="fas fa-plus"></i> Tambah Foto
-    </button>
-    <input type="file" id="foto-input-hidden" accept="image/*" style="display:none" onchange="tambahFoto(this)">
-    <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG. Maks. 15 foto total.</small>
-    <div id="foto-inputs"></div>
-</div>
             <form method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Nama Barang</label>
@@ -137,58 +104,5 @@ quill.root.innerHTML = {{ barang.deskripsi | tojson }};
 document.querySelector('form').addEventListener('submit', function() {
     document.getElementById('deskripsi-input').value = quill.root.innerHTML;
 });
-</script>
-
-<script>
-let fotoFiles = [];
-const existingCount = {{ barang_fotos|length if barang_fotos else 0 }};
-
-function tambahFoto(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (fotoFiles.length + existingCount >= 15) {
-        alert('Maksimal 15 foto!');
-        return;
-    }
-    fotoFiles.push(file);
-    renderFotoList();
-    input.value = '';
-}
-
-function hapusFotoBaru(index) {
-    fotoFiles.splice(index, 1);
-    renderFotoList();
-}
-
-function renderFotoList() {
-    const list = document.getElementById('foto-list');
-    list.innerHTML = '';
-    fotoFiles.forEach((file, i) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const div = document.createElement('div');
-            div.style.cssText = 'position:relative;width:80px;height:80px;flex-shrink:0';
-            div.innerHTML = `
-                <img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px">
-                <button type="button" onclick="hapusFotoBaru(${i})"
-                    style="position:absolute;top:2px;right:2px;background:#e74c3c;border:none;color:white;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center;padding:0">
-                    <i class="fas fa-times"></i>
-                </button>`;
-            list.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-    });
-    const container = document.getElementById('foto-inputs');
-    container.innerHTML = '';
-    const dt = new DataTransfer();
-    fotoFiles.forEach(f => dt.items.add(f));
-    const inp = document.createElement('input');
-    inp.type = 'file';
-    inp.name = 'foto_tambahan';
-    inp.multiple = true;
-    inp.style.display = 'none';
-    inp.files = dt.files;
-    container.appendChild(inp);
-}
 </script>
 {% endblock %}
