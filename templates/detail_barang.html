@@ -49,11 +49,27 @@
         <div>
             <div class="detail-foto">
                 {% if barang.foto %}
-                <img src="{{ barang.foto | foto_src }}" alt="{{ barang.nama_barang }}">
+                <img id="foto-utama" src="{{ barang.foto | foto_src }}" alt="{{ barang.nama_barang }}" style="width:100%;height:100%;object-fit:cover">
                 {% else %}
                 <i class="fas fa-box-open"></i>
                 {% endif %}
             </div>
+            {% if barang_fotos %}
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+                {% if barang.foto %}
+                <img src="{{ barang.foto | foto_src }}"
+                     onclick="document.getElementById('foto-utama').src=this.src;document.querySelectorAll('.thumb-foto').forEach(t=>t.style.borderColor='transparent');this.style.borderColor='var(--primary)'"
+                     class="thumb-foto"
+                     style="width:64px;height:64px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid var(--primary)">
+                {% endif %}
+                {% for f in barang_fotos %}
+                <img src="{{ f.url | foto_src }}"
+                     onclick="document.getElementById('foto-utama').src=this.src;document.querySelectorAll('.thumb-foto').forEach(t=>t.style.borderColor='transparent');this.style.borderColor='var(--primary)'"
+                     class="thumb-foto"
+                     style="width:64px;height:64px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent">
+                {% endfor %}
+            </div>
+            {% endif %}
             {% if barang.kategori %}
             <div style="margin-top:0.8rem">
                 <span class="badge badge-primary"><i class="fas fa-tag"></i> {{ barang.kategori }}</span>
