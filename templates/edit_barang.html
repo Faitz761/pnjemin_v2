@@ -32,16 +32,16 @@
                         </div>
                         {% endfor %}
                         {% endif %}
-                    </div>
-                    <div id="new-foto-list" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"></div>
-                    <div id="add-btn-wrap">
-                        <button type="button" onclick="document.getElementById('foto-input-multi').click()"
-                            style="width:80px;height:80px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:1.5rem;flex-shrink:0;background:transparent">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                        <div id="new-foto-list" style="display:contents"></div>
+                        <div id="add-btn-wrap">
+                            <button type="button" onclick="document.getElementById('foto-input-multi').click()"
+                                style="width:80px;height:80px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:1.5rem;flex-shrink:0;background:transparent">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                     <input type="file" id="foto-input-multi" accept="image/*" style="display:none" onchange="tambahFoto(this)">
-                    <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG. Foto cover tidak bisa dihapus dari sini, ganti dengan upload foto baru.</small>
+                    <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG. Foto baru pertama yang diupload akan jadi cover baru.</small>
                     <div id="foto-inputs"></div>
                 </div>
                 <div class="form-group">
@@ -147,20 +147,51 @@ function renderNewFotos() {
         reader.onload = e => {
             const div = document.createElement('div');
             div.style.cssText = 'position:relative;width:80px;height:80px;flex-shrink:0';
-            div.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:2px solid transparent">
+            const badge = i === 0 ? `<div style="position:absolute;bottom:2px;left:2px;background:#27ae60;color:white;font-size:0.55rem;padding:1px 4px;border-radius:3px;font-weight:700">COVER BARU</div>` : '';
+            div.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:2px solid ${i===0?'#27ae60':'transparent'}">
+                ${badge}
                 <button type="button" onclick="hapusFotoBaru(${i})"
                     style="position:absolute;top:2px;left:2px;background:#e74c3c;border:none;color:white;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center;padding:0">
                     <i class="fas fa-times"></i></button>`;
             list.appendChild(div);
+
+            // Sembunyikan cover existing kalau ada foto baru
+            const coverExisting = document.getElementById('cover-existing');
+            if (coverExisting) coverExisting.style.display = fotoFiles.length > 0 ? 'none' : 'block';
         };
         reader.readAsDataURL(file);
     });
 
+    // Kalau semua foto baru dihapus, tampilkan kembali cover existing
+    if (fotoFiles.length === 0) {
+        const coverExisting = document.getElementById('cover-existing');
+        if (coverExisting) coverExisting.style.display = 'block';
+    }
+
     const container = document.getElementById('foto-inputs');
     container.innerHTML = '';
     if (fotoFiles.length > 0) {
+        // Foto pertama jadi cover baru
+        const dtCover = new DataTransfer();
+        dtCover.items.add(fotoFiles[0]);
+        const inpCover = document.createElement('input');
+        inpCover.type = 'file'; inpCover.name = 'foto'; inpCover.style.display = 'none';
+        inpCover.files = dtCover.files;
+        container.appendChild(inpCover);
+
+        // Sisanya jadi foto tambahan
+        if (fotoFiles.length > 1) {
+            const dtRest = new DataTransfer();
+            fotoFiles.slice(1).forEach(f => dtRest.items.add(f));
+            const inpRest = document.createElement('input');
+            inpRest.type = 'file'; inpRest.name = 'foto_tambahan'; inpRest.multiple = true; inpRest.style.display = 'none';
+            inpRest.files = dtRest.files;
+            container.appendChild(inpRest);
+        }
+    } else {
+        // Tidak ada foto baru, kirim foto tambahan saja
         const dt = new DataTransfer();
-        fotoFiles.forEach(f => dt.items.add(f));
+        // kosong, tidak ada perubahan cover
         const inp = document.createElement('input');
         inp.type = 'file'; inp.name = 'foto_tambahan'; inp.multiple = true; inp.style.display = 'none';
         inp.files = dt.files;
