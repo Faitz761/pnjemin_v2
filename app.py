@@ -923,6 +923,26 @@ def barang_saya():
                            laporan_tunggu_nominal=laporan_tunggu_nominal,
                            notif_count=notif_count())
 
+@app.route('/foto_barang/hapus/<int:id_foto>', methods=['POST'])
+def hapus_foto_barang(id_foto):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    foto = db_execute("""
+        SELECT fb.*, b.id_pemilik FROM foto_barang fb
+        JOIN barang b ON fb.id_barang = b.id
+        WHERE fb.id=?
+    """, (id_foto,), fetchone=True)
+    if not foto or foto['id_pemilik'] != session['user_id']:
+        flash('Foto tidak ditemukan.', 'error')
+        return redirect(url_for('barang_saya'))
+    if USE_CLOUDINARY and foto['url'].startswith('http'):
+        try:
+            public_id = 'pnjemin/' + foto['url'].split('/')[-1].rsplit('.', 1)[0]
+            cloudinary.uploader.destroy(public_id)
+        except: pass
+    db_execute("DELETE FROM foto_barang WHERE id=?", (id_foto,), commit=True)
+    flash('Foto berhasil dihapus.', 'success')
+    return redirect(request.referrer or url_for('barang_saya'))
+
 @app.route('/hapus_barang/<int:id_barang>', methods=['POST'])
 def hapus_barang(id_barang):
     if 'user_id' not in session: return redirect(url_for('login'))
