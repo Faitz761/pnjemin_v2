@@ -50,18 +50,6 @@
                     <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG. Foto baru pertama yang diupload akan jadi cover baru.</small>
                     <div id="foto-inputs"></div>
                 </div>
-                        <div id="new-foto-list" style="display:contents"></div>
-                        <div id="add-btn-wrap">
-                            <button type="button" onclick="document.getElementById('foto-input-multi').click()"
-                                style="width:80px;height:80px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:1.5rem;flex-shrink:0;background:transparent">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <input type="file" id="foto-input-multi" accept="image/*" style="display:none" onchange="tambahFoto(this)">
-                    <small style="display:block;margin-top:0.4rem;color:var(--text-muted)">Format: JPG, PNG. Foto baru pertama yang diupload akan jadi cover baru.</small>
-                    <div id="foto-inputs"></div>
-                </div>
                 <div class="form-group">
                     <label>Nama Barang</label>
                     <input type="text" name="nama_barang" class="form-control" value="{{ barang.nama_barang }}" placeholder="Contoh: Tenda Camping Coleman 4 Orang" required>
