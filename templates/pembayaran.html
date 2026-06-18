@@ -53,28 +53,28 @@
                 </button>
             </form>
             {% else %}
-            <!-- QRIS / Transfer — upload bukti -->
-            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1rem;font-size:0.85rem;color:#92400e">
-                <i class="fas fa-info-circle"></i> <strong>Transfer / QRIS</strong><br>
-                Lakukan pembayaran ke rekening/QR pemilik, lalu upload buktinya di bawah.
-            </div>
-            <form method="post" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label><i class="fas fa-upload"></i> Upload Bukti Pembayaran</label>
-                    <label class="upload-area" for="bukti_input">
-                        <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem;display:block;margin-bottom:0.5rem"></i>
-                        Klik untuk upload bukti transfer / screenshot QRIS
-                        <input type="file" id="bukti_input" name="bukti_pembayaran" accept="image/*" style="display:none" onchange="previewFile(this)">
-                    </label>
-                    <div id="preview_bukti" style="margin-top:0.5rem;display:none">
-                        <img id="preview_img" style="max-width:100%;border-radius:var(--radius-sm);max-height:200px">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:0.5rem">
-                    <i class="fas fa-check-circle"></i> Kirim Bukti Pembayaran
-                </button>
-            </form>
-            {% endif %}
+<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:0.9rem;margin-bottom:1rem;font-size:0.85rem;color:#92400e">
+    <i class="fas fa-info-circle"></i> <strong>Pembayaran Online</strong><br>
+    Klik tombol di bawah untuk membayar via QRIS / Transfer Bank — otomatis terverifikasi.
+</div>
+{% if midtrans_is_production %}
+<script src="https://app.midtrans.com/snap/snap.js" data-client-key="{{ midtrans_client_key }}"></script>
+{% else %}
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ midtrans_client_key }}"></script>
+{% endif %}
+<button id="pay-button" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">
+    <i class="fas fa-qrcode"></i> Bayar Sekarang
+</button>
+<script>
+document.getElementById('pay-button').addEventListener('click', function(){
+    snap.pay("{{ transaksi.snap_token }}", {
+        onSuccess: function(){ window.location.href = "{{ url_for('riwayat') }}"; },
+        onPending: function(){ window.location.href = "{{ url_for('riwayat') }}"; },
+        onError: function(){ alert('Pembayaran gagal, coba lagi.'); }
+    });
+});
+</script>
+{% endif %}
         </div>
     </div>
 </div>

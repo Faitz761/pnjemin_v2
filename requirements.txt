@@ -3,3 +3,4 @@ werkzeug
 gunicorn
 psycopg2-binary
 cloudinary
+midtransclient

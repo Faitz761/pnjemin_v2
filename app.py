@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g, jsonify
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -16,6 +16,20 @@ if DATABASE_URL:
 else:
     import sqlite3
     USE_POSTGRES = False
+
+# ── Midtrans: payment gateway ──
+import hashlib
+MIDTRANS_SERVER_KEY = os.environ.get('MIDTRANS_SERVER_KEY')
+MIDTRANS_CLIENT_KEY = os.environ.get('MIDTRANS_CLIENT_KEY')
+MIDTRANS_IS_PRODUCTION = os.environ.get('MIDTRANS_IS_PRODUCTION', 'false').lower() == 'true'
+USE_MIDTRANS = bool(MIDTRANS_SERVER_KEY)
+if USE_MIDTRANS:
+    import midtransclient
+    snap = midtransclient.Snap(
+        is_production=MIDTRANS_IS_PRODUCTION,
+        server_key=MIDTRANS_SERVER_KEY,
+        client_key=MIDTRANS_CLIENT_KEY
+    )
 
 # ── Cloudinary: untuk upload foto di production ──
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
@@ -394,6 +408,8 @@ def init_db():
         ('foto_checkin','TEXT'), ('checkin_status','TEXT'),
         ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP'),
         ('denda_status','TEXT'), ('denda_due','TIMESTAMP'),
+        ('midtrans_order_id','TEXT'), ('snap_token','TEXT'),
+        ('payment_type','TEXT'), ('paid_at','TIMESTAMP'),
     ]
     migrasi_laporan = [
         ('nominal_denda','REAL'), ('potongan_platform','REAL'),
@@ -402,63 +418,22 @@ def init_db():
         ('alasan_tolak','TEXT'), ('nominal_pemilik','REAL'),
     ]
     if USE_POSTGRES:
-        kolom_baru = [
-        ("laporan", "total_tagihan", "REAL"),
-        ("laporan", "nominal_pemilik", "REAL"),
-        ("laporan", "potongan_platform", "REAL"),
-        ("laporan", "kategori_kerusakan", "TEXT"),
-        ("laporan", "status_validasi", "TEXT"),
-        ("laporan", "alasan_tolak", "TEXT"),
-        ("transaksi", "denda_status", "TEXT"),
-        ("transaksi", "denda_due", "TIMESTAMP"),
-    ]
-    for tabel, col, tipe in kolom_baru:
-        try:
-            db_execute(f"ALTER TABLE {tabel} ADD COLUMN IF NOT EXISTS {col} {tipe}", commit=True)
-        except: pass
-
-        for col, defval in migrasi_transaksi:
-            try: db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
+        for col, tipe in migrasi_transaksi:
+            try: db_execute(f"ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS {col} {tipe}", commit=True)
             except: pass
-        for col, defval in migrasi_laporan:
-            try: db_execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}", commit=True)
+        for col, tipe in migrasi_laporan:
+            try: db_execute(f"ALTER TABLE laporan ADD COLUMN IF NOT EXISTS {col} {tipe}", commit=True)
             except: pass
     else:
         conn = get_db()
         c = conn.cursor()
-        for col, defval in migrasi_transaksi + migrasi_laporan:
-            tabel = 'transaksi' if col in [x for x,_ in migrasi_transaksi] else 'laporan'
-            try: c.execute(f"ALTER TABLE {tabel} ADD COLUMN {col} {defval}")
+        for col, tipe in migrasi_transaksi:
+            try: c.execute(f"ALTER TABLE transaksi ADD COLUMN {col} {tipe}")
+            except: pass
+        for col, tipe in migrasi_laporan:
+            try: c.execute(f"ALTER TABLE laporan ADD COLUMN {col} {tipe}")
             except: pass
         conn.commit()
-
-# Migrasi: tambah kolom checkin jika belum ada
-  #  if USE_POSTGRES:
-  #      for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
-  #          try:
-      #          db_execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}", commit=True)
-     #       except: pass
-    #else:
-      #  conn = get_db()
-      #  c = conn.cursor()
-     #   for col, defval in [('foto_checkin','TEXT'), ('checkin_status','TEXT'), ('checkin_catatan','TEXT'), ('checkin_at','TIMESTAMP')]:
-    #        try:
-   #             c.execute(f"ALTER TABLE transaksi ADD COLUMN {col} {defval}")
-  #          except: pass
- #       conn.commit()
-
-#for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
-  #  try:
-   #     db_execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}", commit=True) if USE_POSTGRES else None
-  #  except: pass
-#if not USE_POSTGRES:
-   # conn = get_db()
-  #  c = conn.cursor()
-   # for col, defval in [('nominal_denda','REAL'), ('potongan_platform','REAL'), ('pemilik_terima','REAL')]:
-   #     try:
-  #          c.execute(f"ALTER TABLE laporan ADD COLUMN {col} {defval}")
-  #      except: pass
-  #  conn.commit()
 
     # Buat admin jika belum ada
     existing = db_execute("SELECT id FROM users WHERE email='admin@pnjemin.com'", fetchone=True)
@@ -736,18 +711,33 @@ def pembayaran(id_transaksi):
     if cek_blokir(): return redirect(url_for('akun_diblokir'))
     transaksi = db_execute("SELECT t.*,b.nama_barang,b.foto FROM transaksi t JOIN barang b ON t.id_barang=b.id WHERE t.id=? AND t.id_user=?",(id_transaksi,session['user_id']), fetchone=True)
     if not transaksi: return redirect(url_for('riwayat'))
-    if request.method == 'POST':
-        metode = transaksi['metode_pembayaran']
-        if metode and metode.lower() in ['cash','cod','tunai']:
-            db_execute("UPDATE transaksi SET status='sedang_dipinjam' WHERE id=?",(id_transaksi,), commit=True)
-            add_notif(transaksi['id_user'],f"Pembayaran '{transaksi['nama_barang']}' (Cash) dikonfirmasi. Selamat meminjam!")
-            flash('Pembayaran cash dikonfirmasi! Peminjaman aktif.','success')
-        else:
-            bukti = save_foto(request.files.get('bukti_pembayaran'), f'bukti_{id_transaksi}')
-            db_execute("UPDATE transaksi SET status='menunggu_verifikasi',bukti_pembayaran=? WHERE id=?",(bukti,id_transaksi), commit=True)
-            flash('Bukti pembayaran dikirim! Menunggu verifikasi admin.','success')
+    metode = (transaksi['metode_pembayaran'] or '').lower()
+    is_cash = metode in ['cash','cod','tunai']
+
+    if request.method == 'POST' and is_cash:
+        db_execute("UPDATE transaksi SET status='sedang_dipinjam' WHERE id=?",(id_transaksi,), commit=True)
+        add_notif(transaksi['id_user'],f"Pembayaran '{transaksi['nama_barang']}' (Cash) dikonfirmasi. Selamat meminjam!")
+        flash('Pembayaran cash dikonfirmasi! Peminjaman aktif.','success')
         return redirect(url_for('riwayat'))
-    return render_template('pembayaran.html', transaksi=transaksi, notif_count=notif_count())
+
+    # Non-cash: generate Snap token kalau belum ada
+    if not is_cash and USE_MIDTRANS and not transaksi['snap_token']:
+        order_id = f"PNJEMIN-{transaksi['id']}-{int(__import__('time').time())}"
+        enabled = None
+        if 'qris' in metode: enabled = ['gopay','other_qris']
+        elif 'transfer' in metode or 'bank' in metode: enabled = ['bca_va','bni_va','bri_va','permata_va','other_va']
+        param = {
+            "transaction_details": {"order_id": order_id, "gross_amount": int(transaksi['total_biaya'])},
+            "customer_details": {"first_name": session.get('nama','Peminjam')},
+        }
+        if enabled: param['enabled_payments'] = enabled
+        result = snap.create_transaction(param)
+        db_execute("UPDATE transaksi SET snap_token=?, midtrans_order_id=? WHERE id=?",
+                   (result['token'], order_id, id_transaksi), commit=True)
+        transaksi = db_execute("SELECT t.*,b.nama_barang,b.foto FROM transaksi t JOIN barang b ON t.id_barang=b.id WHERE t.id=?",(id_transaksi,), fetchone=True)
+
+    return render_template('pembayaran.html', transaksi=transaksi, notif_count=notif_count(),
+                           midtrans_client_key=MIDTRANS_CLIENT_KEY, midtrans_is_production=MIDTRANS_IS_PRODUCTION)
 
 @app.route('/ajukan_pengembalian/<int:id_transaksi>', methods=['POST'])
 def ajukan_pengembalian(id_transaksi):
@@ -1507,6 +1497,32 @@ def chat_detail(partner_id, id_barang=None):
     """,(session['user_id'],partner_id,partner_id,session['user_id']), fetchall=True)
     db_execute("UPDATE chat SET dibaca=1 WHERE id_penerima=? AND id_pengirim=?",(session['user_id'],partner_id), commit=True)
     return render_template('chat_detail.html', partner=partner, messages=messages, barang=barang, id_barang=id_barang, notif_count=notif_count())
+
+@app.route('/midtrans/notifikasi', methods=['POST'])
+def midtrans_notifikasi():
+    data = request.get_json(silent=True) or {}
+    order_id = data.get('order_id')
+    status_code = data.get('status_code')
+    gross_amount = data.get('gross_amount')
+    signature_key = data.get('signature_key')
+    expected = hashlib.sha512(f"{order_id}{status_code}{gross_amount}{MIDTRANS_SERVER_KEY}".encode()).hexdigest()
+    if signature_key != expected:
+        return jsonify({'error':'invalid signature'}), 403
+
+    transaksi = db_execute("SELECT * FROM transaksi WHERE midtrans_order_id=?", (order_id,), fetchone=True)
+    if not transaksi:
+        return jsonify({'error':'not found'}), 404
+
+    status = data.get('transaction_status')
+    fraud = data.get('fraud_status')
+    if status in ['capture','settlement'] and fraud in [None,'accept']:
+        db_execute("UPDATE transaksi SET status='sedang_dipinjam', payment_type=?, paid_at=CURRENT_TIMESTAMP WHERE id=?",
+                   (data.get('payment_type'), transaksi['id']), commit=True)
+        add_notif(transaksi['id_user'], f"Pembayaran berhasil! Peminjaman aktif.")
+    elif status in ['deny','cancel','expire']:
+        db_execute("UPDATE transaksi SET status='gagal_bayar' WHERE id=?", (transaksi['id'],), commit=True)
+
+    return jsonify({'status':'ok'})
 
 # ── HALAMAN STATIS ──
 @app.route('/tentang')
