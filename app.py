@@ -727,9 +727,12 @@ def pembayaran(id_transaksi):
         if 'qris' in metode: enabled = ['gopay','other_qris']
         elif 'transfer' in metode or 'bank' in metode: enabled = ['bca_va','bni_va','bri_va','permata_va','other_va']
         param = {
-            "transaction_details": {"order_id": order_id, "gross_amount": int(transaksi['total_biaya'])},
-            "customer_details": {"first_name": session.get('nama','Peminjam')},
-        }
+    "transaction_details": {"order_id": order_id, "gross_amount": int(transaksi['total_biaya'])},
+    "customer_details": {"first_name": session.get('nama','Peminjam')},
+    "callbacks": {
+        "finish": "https://pnjemin.up.railway.app/riwayat"
+    }
+}
         if enabled: param['enabled_payments'] = enabled
         result = snap.create_transaction(param)
         db_execute("UPDATE transaksi SET snap_token=?, midtrans_order_id=? WHERE id=?",
