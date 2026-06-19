@@ -79,7 +79,10 @@
 </head>
 <body>
 <aside class="sidebar">
-    <div class="sidebar-logo">P🤝<span>Njemin</span><br><small style="font-size:0.65rem;color:rgba(255,255,255,0.35);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600">ADMIN PANEL</small></div>
+    <div class="sidebar-logo">
+    <img src="{{ url_for('static', filename='images/Pnjemin_Logo2.png') }}" alt="P-Njemin" style="height:28px;"><br>
+    <small style="font-size:0.65rem;color:rgba(255,255,255,0.35);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600">ADMIN PANEL</small>
+</div>
     <div class="sidebar-label">Menu</div>
     <nav class="sidebar-nav">
         <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint=='admin_dashboard' %}class="active"{% endif %}><i class="fas fa-chart-pie"></i> Dashboard</a>
